@@ -172,6 +172,28 @@ app.get('/api/leaderboards/active', async (req, res) => {
     }
 });
 
+// GET /api/leaderboard - Top users by streak length
+app.get('/api/leaderboard', async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT 
+        user_id, 
+        username, 
+        current_streak, 
+        longest_streak,
+        created_at
+      FROM users
+      ORDER BY current_streak DESC, longest_streak DESC
+      LIMIT 50
+    `);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching leaderboard:', err);
+    res.status(500).json({ error: 'Failed to retrieve leaderboard' });
+  }
+});
+
 // -------------------------------------------------------------
 // AUTOMATED CRON WORKERS (Settlement & Data Ingestion)
 // -------------------------------------------------------------

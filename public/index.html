@@ -22,7 +22,22 @@
         <h2>Today's Matchups</h2>
         <div id="matchupsContainer"><p>Loading matchups...</p></div>
     </div>
-
+    <div class="leaderboard-container">
+  <h2>🔥 Streak Leaderboard</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Rank</th>
+        <th>User</th>
+        <th>Current Streak</th>
+        <th>Longest Streak</th>
+      </tr>
+    </thead>
+    <tbody id="leaderboard-body">
+      <!-- Dynamic rows injected here -->
+    </tbody>
+  </table>
+</div>
     <script>
         async function fetchMatchups() {
             try {
@@ -72,6 +87,32 @@
         }
 
         fetchMatchups();
+
+        async function loadLeaderboard() {
+  try {
+    const response = await fetch('/api/leaderboard');
+    const leaderboard = await response.json();
+
+    const tbody = document.getElementById('leaderboard-body');
+    tbody.innerHTML = '';
+
+    leaderboard.forEach((user, index) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><strong>#${index + 1}</strong></td>
+        <td>${user.username}</td>
+        <td><span class="badge streak-active">🔥 ${user.current_streak}</span></td>
+        <td>🏆 ${user.longest_streak}</td>
+      `;
+      tbody.appendChild(row);
+    });
+  } catch (err) {
+    console.error('Failed to load leaderboard:', err);
+  }
+}
+
+// Call on page load or tab navigation
+document.addEventListener('DOMContentLoaded', loadLeaderboard);
     </script>
 </body>
 </html>
