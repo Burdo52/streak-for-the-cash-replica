@@ -131,33 +131,44 @@ app.get('/api/matchups', async (req, res) => {
 
 // Make a Pick (Locks previous selection enforcement)
 app.post('/api/picks', authenticateToken, async (req, res) => {
-    const userId = req.user.userId;
-    const { matchupId, selectedOption } = req.body;
+  const { matchup_id, selected_option } = req.body;
+  const userId = req.user.user_id;
 
-    try {
-        // Validate game lock time
-        const matchupRes = await db.query('SELECT start_time, status FROM matchups WHERE matchup_id = $1', [matchupId]);
-        if (matchupRes.rows.length === 0) return res.status(404).json({ error: "Matchup not found." });
+  try {
+    // 1. Fetch the matchup to verify start time and status
+    const matchupRes = await db.query(
+      'SELECT start_time, status FROM matchups WHERE matchup_id = $1',
+      [matchup_id]
+    );
 
-        const matchup = matchupRes.rows[0];
-        if (new Date() >= new Date(matchup.start_time) || matchup.status !== 'SCHEDULED') {
-            return res.status(400).json({ error: "Pick locked! Game has already started." });
-        }
-
-        // Insert new pick (Database unique index enforces only ONE locked pick)
-        const newPick = await db.query(
-            `INSERT INTO user_picks (user_id, matchup_id, selected_option, status)
-             VALUES ($1, $2, $3, 'LOCKED') RETURNING *`,
-            [userId, matchupId, selectedOption]
-        );
-
-        res.status(201).json({ message: "Pick locked in!", pick: newPick.rows[0] });
-    } catch (err) {
-        if (err.code === '23505') {
-            return res.status(400).json({ error: "You already have an active pick locked in! Wait for it to settle." });
-        }
-        res.status(500).json({ error: err.message });
+    if (matchupRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Matchup not found.' });
     }
+
+    const matchup = matchupRes.rows[0];
+    const now = new Date();
+    const startTime = new Date(matchup.start_time);
+
+    // 2. Reject pick if the game has already started or is completed
+    if (now >= startTime || matchup.status !== 'scheduled') {
+      return res.status(400).json({ 
+        error: 'Picks are locked for this matchup because the game has already started.' 
+      });
+    }
+
+    // 3. Upsert (Insert or Update) user pick
+    await db.query(`
+      INSERT INTO picks (user_id, matchup_id, selected_option)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (user_id, matchup_id) 
+      DO UPDATE SET selected_option = EXCLUDED.selected_option, updated_at = NOW()
+    `, [userId, matchup_id, selected_option]);
+
+    res.json({ message: 'Pick successfully submitted!' });
+  } catch (err) {
+    console.error('Error submitting pick:', err);
+    res.status(500).json({ error: 'Failed to submit pick.' });
+  }
 });
 
 // Leaderboards
