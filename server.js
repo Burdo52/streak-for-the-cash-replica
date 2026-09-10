@@ -1,5 +1,7 @@
 const express = require('express');
 const { Pool } = require('pg');
+const cron = require('node-cron'); // <--- ADD THIS
+const { fetchAndIngestMatchups } = require('./services/oddsApi');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
@@ -224,6 +226,16 @@ cron.schedule('*/15 * * * *', async () => {
         client.release();
     }
 });
+
+cron.schedule('0 * * * *', () => {
+  console.log('Running automated Odds API sync...');
+  fetchAndIngestMatchups(db);
+});
+
+// Run once when the server boots up in production
+if (process.env.NODE_ENV === 'production') {
+  fetchAndIngestMatchups(db);
+}
 
 // Server Initialization
 app.listen(PORT, () => {
