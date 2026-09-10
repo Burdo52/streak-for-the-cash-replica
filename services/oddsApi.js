@@ -1,4 +1,4 @@
-const fetch = require('node-fetch'); // Ensure node-fetch or native fetch is available
+//const fetch = require('node-fetch'); // Ensure node-fetch or native fetch is available
 
 const ODDS_API_KEY = process.env.ODDS_API_KEY;
 const BASE_URL = 'https://api.the-odds-api.com/v4/sports';

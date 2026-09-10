@@ -5,7 +5,6 @@ const { fetchAndIngestMatchups } = require('./services/oddsApi');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
-const cron = require('node-cron');
 const axios = require('axios');
 const path = require('path');
 
