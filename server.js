@@ -107,12 +107,24 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
 // Fetch Active Matchups
 app.get('/api/matchups', async (req, res) => {
     try {
-        const { rows } = await db.query(
-            `SELECT * FROM matchups WHERE start_time > NOW() AND status = 'SCHEDULED' ORDER BY start_time ASC`
-        );
-        res.json(rows);
+        const result = await db.query(`
+            SELECT 
+                matchup_id, 
+                sport, 
+                category, 
+                prop_text, 
+                option_a, 
+                option_b, 
+                start_time, 
+                status 
+            FROM matchups 
+            WHERE status IN ('scheduled', 'pending')
+            ORDER BY start_time ASC
+        `);
+        res.json(result.rows);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error('Error fetching matchups:', err);
+        res.status(500).json({ error: 'Failed to retrieve matchups' });
     }
 });
 
