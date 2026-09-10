@@ -14,6 +14,16 @@
         button { flex: 1; padding: 10px; border: 1px solid var(--primary); background: #fff; color: var(--primary); font-weight: bold; border-radius: 6px; cursor: pointer; }
         button:hover { background: var(--primary); color: #fff; }
         .streak-banner { background: #00875a; color: white; text-align: center; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-weight: bold; }
+        .matchup-card.locked {
+  opacity: 0.6;
+  background-color: #f4f4f4;
+}
+
+.pick-btn:disabled {
+  cursor: not-allowed;
+  background-color: #ccc;
+  border-color: #bbb;
+}
     </style>
 </head>
 <body>
@@ -40,31 +50,46 @@
 </div>
     <script>
         async function fetchMatchups() {
-            try {
-                const res = await fetch('/api/matchups');
-                const matchups = await res.json();
-                const container = document.getElementById('matchupsContainer');
-                
-                if (matchups.length === 0) {
-                    container.innerHTML = '<div class="card"><p>No active matchups right now. Check back soon!</p></div>';
-                    return;
-                }
+  try {
+    const response = await fetch('/api/matchups');
+    const matchups = await response.json();
+    
+    const container = document.getElementById('matchups-container'); // Adjust ID to match your HTML element
+    container.innerHTML = '';
 
-                container.innerHTML = matchups.map(m => `
-                    <div class="card">
-                        <div class="matchup-title">${m.category}: ${m.prop_text}</div>
-                        <p><small>Starts: ${new Date(m.start_time).toLocaleString()}</small></p>
-                        <div class="btn-group">
-                            <button onclick="makePick(${m.matchup_id}, '${m.option_a}')">${m.option_a}</button>
-                            <button onclick="makePick(${m.matchup_id}, '${m.option_b}')">${m.option_b}</button>
-                        </div>
-                    </div>
-                `).join('');
-            } catch (err) {
-                console.error('Error loading matchups:', err);
-            }
-        }
+    const now = new Date();
 
+    matchups.forEach(m => {
+      const startTime = new Date(m.start_time);
+      const isLocked = now >= startTime || m.status !== 'scheduled';
+
+      const card = document.createElement('div');
+      card.className = `matchup-card ${isLocked ? 'locked' : ''}`;
+      card.innerHTML = `
+        <span class="sport-badge">${m.sport || 'Sports'}</span>
+        <h3>${m.prop_text}</h3>
+        <div class="options">
+          <button 
+            class="pick-btn" 
+            ${isLocked ? 'disabled' : ''} 
+            onclick="makePick(${m.matchup_id}, '${m.option_a}')">
+            ${m.option_a}
+          </button>
+          <button 
+            class="pick-btn" 
+            ${isLocked ? 'disabled' : ''} 
+            onclick="makePick(${m.matchup_id}, '${m.option_b}')">
+            ${m.option_b}
+          </button>
+        </div>
+        <p class="status-label">${isLocked ? '🔒 Locked' : `Starts: ${startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}</p>
+      `;
+      container.appendChild(card);
+    });
+  } catch (err) {
+    console.error('Error fetching matchups:', err);
+  }
+}
         async function makePick(matchupId, selectedOption) {
             const token = localStorage.getItem('streakToken');
             if (!token) {
