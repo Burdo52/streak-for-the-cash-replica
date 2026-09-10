@@ -231,6 +231,14 @@ cron.schedule('0 * * * *', () => {
   fetchAndIngestMatchups(db);
 });
 
+const { settleCompletedMatchups } = require('./services/settlementService');
+
+// Run settlement routine every 15 minutes
+cron.schedule('*/15 * * * *', () => {
+  console.log('Running automated game settlement sync...');
+  settleCompletedMatchups(db);
+});
+
 // Run once when the server boots up in production
 if (process.env.NODE_ENV === 'production') {
   fetchAndIngestMatchups(db);
