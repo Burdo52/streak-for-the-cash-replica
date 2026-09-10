@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streak for the Cash Replica</title>
+    <style>
+        :root { --primary: #0052cc; --bg: #f4f5f7; --card-bg: #ffffff; --text: #172b4d; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .card { background: var(--card-bg); border-radius: 8px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .matchup-title { font-size: 1.1rem; font-weight: bold; margin-bottom: 8px; }
+        .btn-group { display: flex; gap: 10px; margin-top: 12px; }
+        button { flex: 1; padding: 10px; border: 1px solid var(--primary); background: #fff; color: var(--primary); font-weight: bold; border-radius: 6px; cursor: pointer; }
+        button:hover { background: var(--primary); color: #fff; }
+        .streak-banner { background: #00875a; color: white; text-align: center; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="streak-banner" id="streakDisplay">Current Streak: 0</div>
+        <h2>Today's Matchups</h2>
+        <div id="matchupsContainer"><p>Loading matchups...</p></div>
+    </div>
+
+    <script>
+        async function fetchMatchups() {
+            try {
+                const res = await fetch('/api/matchups');
+                const matchups = await res.json();
+                const container = document.getElementById('matchupsContainer');
+                
+                if (matchups.length === 0) {
+                    container.innerHTML = '<div class="card"><p>No active matchups right now. Check back soon!</p></div>';
+                    return;
+                }
+
+                container.innerHTML = matchups.map(m => `
+                    <div class="card">
+                        <div class="matchup-title">${m.category}: ${m.prop_text}</div>
+                        <p><small>Starts: ${new Date(m.start_time).toLocaleString()}</small></p>
+                        <div class="btn-group">
+                            <button onclick="makePick(${m.matchup_id}, '${m.option_a}')">${m.option_a}</button>
+                            <button onclick="makePick(${m.matchup_id}, '${m.option_b}')">${m.option_b}</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error('Error loading matchups:', err);
+            }
+        }
+
+        async function makePick(matchupId, selectedOption) {
+            const token = localStorage.getItem('streakToken');
+            if (!token) {
+                alert('Please register or log in first!');
+                return;
+            }
+
+            const res = await fetch('/api/picks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ matchupId, selectedOption })
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                alert('Pick locked in!');
+            } else {
+                alert(data.error || 'Failed to place pick.');
+            }
+        }
+
+        fetchMatchups();
+    </script>
+</body>
+</html>
