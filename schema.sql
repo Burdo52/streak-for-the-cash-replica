@@ -15,20 +15,18 @@ CREATE TABLE users (
 );
 
 -- 2. Matchups Table
-CREATE TABLE matchups (
+CREATE TABLE IF NOT EXISTS matchups (
     matchup_id SERIAL PRIMARY KEY,
-    sport_key VARCHAR(50) NOT NULL,
-    event_id VARCHAR(100) UNIQUE NOT NULL,
+    sport VARCHAR(50),
     category VARCHAR(100) NOT NULL,
-    prop_text VARCHAR(255) NOT NULL,
+    prop_text TEXT NOT NULL,
     option_a VARCHAR(100) NOT NULL,
     option_b VARCHAR(100) NOT NULL,
     start_time TIMESTAMP WITH TIME ZONE NOT NULL,
-    status VARCHAR(20) DEFAULT 'SCHEDULED' CHECK (status IN ('SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'POSTPONED')),
-    winning_option VARCHAR(100) DEFAULT NULL, -- Populated as Option A, Option B, or PUSH
+    status VARCHAR(20) DEFAULT 'scheduled',
+    winning_option VARCHAR(100),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
-
 -- 3. User Picks Table
 CREATE TABLE user_picks (
     pick_id SERIAL PRIMARY KEY,
