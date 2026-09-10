@@ -30,7 +30,7 @@
     <div class="container">
         <div class="streak-banner" id="streakDisplay">Current Streak: 0</div>
         <h2>Today's Matchups</h2>
-        <div id="matchups-Container"><p>Loading matchups...</p></div>
+        <div id="matchupsContainer"><p>Loading matchups...</p></div>
     </div>
     <div class="leaderboard-container">
   <h2>🔥 Streak Leaderboard</h2>
@@ -54,7 +54,7 @@
     const response = await fetch('/api/matchups');
     const matchups = await response.json();
     
-    const container = document.getElementById('matchups-container'); // Adjust ID to match your HTML element
+    const container = document.getElementById('matchupsContainer'); // Adjust ID to match your HTML element
     container.innerHTML = '';
 
     const now = new Date();
