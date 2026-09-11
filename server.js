@@ -277,6 +277,18 @@ app.get('/api/users/picks', authenticateToken, async (req, res) => {
   }
 });
 
+// POST /api/admin/ingest - Manual trigger for Odds API
+app.post('/api/admin/ingest', async (req, res) => {
+  try {
+    console.log('⚡ Manual ingestion triggered via API');
+    await fetchAndIngestMatchups(db);
+    res.json({ message: 'Ingestion complete! Check database for new matchups.' });
+  } catch (err) {
+    console.error('Manual ingestion error:', err);
+    res.status(500).json({ error: 'Failed to run ingestion: ' + err.message });
+  }
+});
+
 // -------------------------------------------------------------
 // AUTOMATED CRON WORKERS (Settlement & Data Ingestion)
 // -------------------------------------------------------------
@@ -342,6 +354,17 @@ const { settleCompletedMatchups } = require('./services/settlementService');
 cron.schedule('*/15 * * * *', () => {
   console.log('Running automated game settlement sync...');
   settleCompletedMatchups(db);
+});
+
+// Schedule daily ingestion at 4:00 AM EDT (08:00 UTC)
+cron.schedule('0 8 * * *', async () => {
+  console.log('⏰ [CRON] Starting daily Odds API ingestion...');
+  try {
+    await fetchAndIngestMatchups(db);
+    console.log('✅ [CRON] Daily Odds API ingestion complete.');
+  } catch (err) {
+    console.error('❌ [CRON] Failed to execute Odds API ingestion:', err);
+  }
 });
 
 // Run once when the server boots up in production
