@@ -185,7 +185,7 @@ app.post('/api/picks', authenticateToken, async (req, res) => {
 
     // 3. Upsert (Insert or Update) user pick
     await db.query(`
-      INSERT INTO picks (user_id, matchup_id, selected_option)
+      INSERT INTO user_picks (user_id, matchup_id, selected_option)
       VALUES ($1, $2, $3)
       ON CONFLICT (user_id, matchup_id) 
       DO UPDATE SET selected_option = EXCLUDED.selected_option, updated_at = NOW()
@@ -246,7 +246,7 @@ app.get('/api/users/picks', authenticateToken, async (req, res) => {
         m.sport,
         m.status AS matchup_status,
         m.winning_option
-      FROM picks p
+      FROM user_picks p
       JOIN matchups m ON p.matchup_id = m.matchup_id
       WHERE p.user_id = $1
       ORDER BY p.created_at DESC

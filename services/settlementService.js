@@ -48,7 +48,7 @@ async function settleCompletedMatchups(db) {
 
         // Fetch picks for this matchup
         const picksRes = await client.query(
-          `SELECT * FROM picks WHERE matchup_id = $1`,
+          `SELECT * FROM user_picks WHERE matchup_id = $1`,
           [matchup.matchup_id]
         );
 
