@@ -1,91 +1,110 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Streak for the Cash Replica</title>
-    <style>
-        :root { --primary: #0052cc; --bg: #f4f5f7; --card-bg: #ffffff; --text: #172b4d; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; }
-        .card { background: var(--card-bg); border-radius: 8px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .matchup-title { font-size: 1.1rem; font-weight: bold; margin-bottom: 8px; }
-        .btn-group { display: flex; gap: 10px; margin-top: 12px; }
-        button { flex: 1; padding: 10px; border: 1px solid var(--primary); background: #fff; color: var(--primary); font-weight: bold; border-radius: 6px; cursor: pointer; }
-        button:hover { background: var(--primary); color: #fff; }
-        .streak-banner { background: #00875a; color: white; text-align: center; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-weight: bold; }
-        .matchup-card.locked {
-  opacity: 0.6;
-  background-color: #f4f4f4;
-}
-
-.pick-btn:disabled {
-  cursor: not-allowed;
-  background-color: #ccc;
-  border-color: #bbb;
-}
-.badge {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-weight: bold;
-  font-size: 0.85rem;
-}
-.badge.win { background-color: #d4edda; color: #155724; }
-.badge.loss { background-color: #f8d7da; color: #721c24; }
-.badge.pending { background-color: #fff3cd; color: #856404; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Streak for the Cash</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    .app-nav { display: flex; gap: 10px; margin-bottom: 20px; }
+    .nav-btn { padding: 10px 16px; border: 1px solid #ccc; background: #f8f9fa; cursor: pointer; border-radius: 6px; font-weight: bold; }
+    .nav-btn.active { background: #007bff; color: white; border-color: #007bff; }
+    .matchup-card.locked { opacity: 0.6; background-color: #f4f4f4; }
+    .pick-btn:disabled { cursor: not-allowed; background-color: #ccc; border-color: #bbb; }
+    .badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.85rem; }
+    .badge.win { background-color: #d4edda; color: #155724; }
+    .badge.loss { background-color: #f8d7da; color: #721c24; }
+    .badge.pending { background-color: #fff3cd; color: #856404; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #ddd; }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="streak-banner" id="streakDisplay">Current Streak: 0</div>
-        <h2>Today's Matchups</h2>
-        <div id="matchupsContainer"><p>Loading matchups...</p></div>
-    </div>
-    <div class="leaderboard-container">
-  <h2>🔥 Streak Leaderboard</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Rank</th>
-        <th>User</th>
-        <th>Current Streak</th>
-        <th>Longest Streak</th>
-      </tr>
-    </thead>
-    <tbody id="leaderboard-body">
-      <!-- Dynamic rows injected here -->
-    </tbody>
-  </table>
-</div>
-<!-- Pick History Section -->
-<div id="history-container" class="history-section">
-  <h2>Your Pick History</h2>
-  <table class="history-table">
-    <thead>
-      <tr>
-        <th>Sport</th>
-        <th>Matchup</th>
-        <th>Your Pick</th>
-        <th>Outcome</th>
-      </tr>
-    </thead>
-    <tbody id="history-list"></tbody>
-  </table>
-</div>
-    <script>
-        async function fetchMatchups() {
+
+  <h1>Streak for the Cash</h1>
+
+  <!-- Navigation Bar -->
+  <nav class="app-nav">
+    <button class="nav-btn active" onclick="showTab('matchups')">Matchups</button>
+    <button class="nav-btn" onclick="showTab('leaderboard')">Leaderboard</button>
+    <button class="nav-btn" onclick="showTab('profile')">My Profile</button>
+  </nav>
+
+  <!-- View 1: Matchups (Contains your existing matchup container) -->
+  <div id="matchups-section" class="tab-content">
+    <div id="matchups-container"></div>
+  </div>
+
+  <!-- View 2: Leaderboard -->
+  <div id="leaderboard-section" class="tab-content" style="display: none;">
+    <h2>🔥 Streak Leaderboard</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>User</th>
+          <th>Current Streak</th>
+          <th>Longest Streak</th>
+        </tr>
+      </thead>
+      <tbody id="leaderboard-body"></tbody>
+    </table>
+  </div>
+
+  <!-- View 3: Profile & Pick History -->
+  <div id="profile-section" class="tab-content" style="display: none;">
+    <h2>User Profile</h2>
+    <p>Track your past picks and active streak.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Sport</th>
+          <th>Matchup</th>
+          <th>Your Pick</th>
+          <th>Outcome</th>
+        </tr>
+      </thead>
+      <tbody id="history-list"></tbody>
+    </table>
+  </div>
+
+  <script>
+    // Tab switching handler
+    function showTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+
+      if (tabName === 'matchups') {
+        document.getElementById('matchups-section').style.display = 'block';
+        fetchMatchups();
+      } else if (tabName === 'leaderboard') {
+        document.getElementById('leaderboard-section').style.display = 'block';
+        loadLeaderboard();
+      } else if (tabName === 'profile') {
+        document.getElementById('profile-section').style.display = 'block';
+        fetchPickHistory();
+      }
+    }
+
+    // Existing Matchups Fetch
+    async function fetchMatchups() {
   try {
     const response = await fetch('/api/matchups');
     const matchups = await response.json();
     
-    const container = document.getElementById('matchupsContainer'); // Adjust ID to match your HTML element
-    container.innerHTML = '';
+    const container = document.getElementById('matchups-container'); 
+    if (!container) return;
 
+    container.innerHTML = '';
     const now = new Date();
 
     matchups.forEach(m => {
       const startTime = new Date(m.start_time);
       const isLocked = now >= startTime || m.status !== 'scheduled';
+
+      // Format date (e.g., "Sep 10") and time (e.g., "7:00 PM")
+      const dateFormatted = startTime.toLocaleDateString([], { month: 'short', day: 'numeric' });
+      const timeFormatted = startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
       const card = document.createElement('div');
       card.className = `matchup-card ${isLocked ? 'locked' : ''}`;
@@ -106,7 +125,9 @@
             ${m.option_b}
           </button>
         </div>
-        <p class="status-label">${isLocked ? '🔒 Locked' : `Starts: ${startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}</p>
+        <p class="status-label">
+          ${isLocked ? '🔒 Locked' : `Starts: ${dateFormatted} at ${timeFormatted}`}
+        </p>
       `;
       container.appendChild(card);
     });
@@ -114,95 +135,71 @@
     console.error('Error fetching matchups:', err);
   }
 }
-        async function makePick(matchupId, selectedOption) {
-            const token = localStorage.getItem('streakToken');
-            if (!token) {
-                alert('Please register or log in first!');
-                return;
-            }
 
-            const res = await fetch('/api/picks', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ matchupId, selectedOption })
-            });
+    // Leaderboard Fetch
+    async function loadLeaderboard() {
+      try {
+        const response = await fetch('/api/leaderboard');
+        const leaderboard = await response.json();
+        const tbody = document.getElementById('leaderboard-body');
+        if (!tbody) return;
 
-            const data = await res.json();
-            if (res.ok) {
-                alert('Pick locked in!');
-            } else {
-                alert(data.error || 'Failed to place pick.');
-            }
-        }
-
-        fetchMatchups();
-
-        async function loadLeaderboard() {
-  try {
-    const response = await fetch('/api/leaderboard');
-    const leaderboard = await response.json();
-
-    const tbody = document.getElementById('leaderboard-body');
-    tbody.innerHTML = '';
-
-    leaderboard.forEach((user, index) => {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td><strong>#${index + 1}</strong></td>
-        <td>${user.username}</td>
-        <td><span class="badge streak-active">🔥 ${user.current_streak}</span></td>
-        <td>🏆 ${user.longest_streak}</td>
-      `;
-      tbody.appendChild(row);
-    });
-  } catch (err) {
-    console.error('Failed to load leaderboard:', err);
-  }
-}
-
-// Call on page load or tab navigation
-document.addEventListener('DOMContentLoaded', loadLeaderboard);
-
-async function fetchPickHistory() {
-  const token = localStorage.getItem('token'); // Adjust to your auth storage
-  if (!token) return;
-
-  try {
-    const response = await fetch('/api/users/picks', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    
-    if (!response.ok) throw new Error('Failed to fetch history');
-    
-    const history = await response.json();
-    const listContainer = document.getElementById('history-list');
-    if (!listContainer) return;
-
-    listContainer.innerHTML = '';
-
-    history.forEach(item => {
-      const row = document.createElement('tr');
-      
-      // Apply status classes for styling
-      let statusBadge = '<span class="badge pending">⏳ Pending</span>';
-      if (item.status === 'Win') {
-        statusBadge = '<span class="badge win">✅ Win</span>';
-      } else if (item.status === 'Loss') {
-        statusBadge = '<span class="badge loss">❌ Loss</span>';
+        tbody.innerHTML = '';
+        leaderboard.forEach((user, index) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td><strong>#${index + 1}</strong></td>
+            <td>${user.username}</td>
+            <td><span class="badge win">🔥 ${user.current_streak}</span></td>
+            <td>🏆 ${user.longest_streak}</td>
+          `;
+          tbody.appendChild(row);
+        });
+      } catch (err) {
+        console.error('Failed to load leaderboard:', err);
       }
+    }
 
-      row.innerHTML = `
-        <td>${item.sport}</td>
-        <td>${item.propText}</td>
-        <td><strong>${item.selectedOption}</strong></td>
-        <td>${statusBadge}</td>
-      `;
-      listContainer.appendChild(row);
+    // Pick History Fetch
+    async function fetchPickHistory() {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      try {
+        const response = await fetch('/api/users/picks', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error('Failed to fetch history');
+        
+        const history = await response.json();
+        const listContainer = document.getElementById('history-list');
+        if (!listContainer) return;
+
+        listContainer.innerHTML = '';
+        history.forEach(item => {
+          const row = document.createElement('tr');
+          let statusBadge = '<span class="badge pending">⏳ Pending</span>';
+          if (item.status === 'Win') statusBadge = '<span class="badge win">✅ Win</span>';
+          else if (item.status === 'Loss') statusBadge = '<span class="badge loss">❌ Loss</span>';
+
+          row.innerHTML = `
+            <td>${item.sport}</td>
+            <td>${item.propText}</td>
+            <td><strong>${item.selectedOption}</strong></td>
+            <td>${statusBadge}</td>
+          `;
+          listContainer.appendChild(row);
+        });
+      } catch (err) {
+        console.error('Error rendering pick history:', err);
+      }
+    }
+
+    // Initial page load
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchMatchups();
     });
-  } catch (err) {
-    console.error('Error rendering pick history:', err);
-  }
-}
-    </script>
+  </script>
 </body>
 </html>
