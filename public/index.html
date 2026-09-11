@@ -294,6 +294,41 @@
 .sport-badge.epl { background-color: #38003c; border: 1px solid #00ff87; } /* Premier League Purple */
 .sport-badge.nfl { background-color: #b91c1c; }   /* NFL Red */
 .sport-badge.ncaaf { background-color: #d97706; } /* College Gold/Orange */
+
+/* Filter Bar Styling */
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.filter-btn {
+  background-color: #1e293b;
+  color: #94a3b8;
+  border: 1px solid #334155;
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+  background-color: #334155;
+  color: #f8fafc;
+}
+
+.filter-btn.active {
+  background-color: #38bdf8;
+  color: #0f172a;
+  border-color: #38bdf8;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+}
 </style>
 </head>
 <body>
@@ -315,11 +350,18 @@
   <!-- Date Navigation Bar -->
   <div class="date-bar" id="date-bar"></div>
 
-  <div id="matchups-container"></div>
+  <!-- League Filter Bar -->
+<div class="filter-bar" id="filter-bar">
+  <button class="filter-btn active" onclick="setSportFilter('ALL')">All</button>
+  <button class="filter-btn" onclick="setSportFilter('MLB')">MLB</button>
+  <button class="filter-btn" onclick="setSportFilter('EPL')">EPL</button>
+  <button class="filter-btn" onclick="setSportFilter('NFL')">NFL</button>
+  <button class="filter-btn" onclick="setSportFilter('NCAAF')">NCAAF</button>
 </div>
-      <div id="matchups-container"></div>
-    </div>
 
+<!-- Matchups Container -->
+<div id="matchups-container"></div>
+     
     <!-- View 2: Leaderboard -->
     <div id="leaderboard-section" class="tab-content" style="display: none;">
       <h2>🔥 Streak Leaderboard</h2>
@@ -372,8 +414,21 @@
       }
     }
 
-    // Existing Matchups Fetch
-    async function fetchMatchups(dateStr = selectedDate) {
+    let selectedSport = 'ALL'; // Global state for active league filter
+
+function setSportFilter(sport) {
+  selectedSport = sport;
+
+  // Update active state on buttons
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.trim().toUpperCase() === sport);
+  });
+
+  // Re-render matchups for current date using new filter
+  fetchMatchups(selectedDate);
+}
+
+async function fetchMatchups(dateStr = selectedDate) {
   try {
     const token = localStorage.getItem('token');
     const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
@@ -386,29 +441,33 @@
 
     container.innerHTML = '';
 
-    // Guard Clause: Check if the response is not an array (e.g., error object returned from server)
     if (!Array.isArray(matchups)) {
       console.error('Server returned non-array payload:', matchups);
       container.innerHTML = `<p style="text-align: center; color: #f87171;">Failed to load matchups: ${matchups.error || 'Server error'}</p>`;
       return;
     }
 
-    if (matchups.length === 0) {
-      container.innerHTML = `<p style="text-align: center; color: #94a3b8;">No matchups scheduled for this date.</p>`;
+    // Client-side sport filter check
+    const filteredMatchups = matchups.filter(m => {
+      if (selectedSport === 'ALL') return true;
+      return (m.sport || '').toUpperCase() === selectedSport;
+    });
+
+    if (filteredMatchups.length === 0) {
+      container.innerHTML = `<p style="text-align: center; color: #94a3b8;">No ${selectedSport === 'ALL' ? '' : selectedSport} matchups available for this date.</p>`;
       return;
     }
 
     const now = new Date();
 
-    matchups.forEach(m => {
+    filteredMatchups.forEach(m => {
       const startTime = new Date(m.start_time);
       const isLocked = now >= startTime || m.status !== 'scheduled';
       const timeFormatted = startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const sportClass = (m.sport || '').toLowerCase().trim();
 
       const isOptionASelected = m.user_pick === m.option_a;
       const isOptionBSelected = m.user_pick === m.option_b;
-
-      const sportClass = (m.sport || '').toLowerCase().trim();
 
       const card = document.createElement('div');
       card.className = `matchup-card ${isLocked ? 'locked' : ''}`;
