@@ -107,14 +107,15 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
 
 // Fetch Active Matchups
 // GET /api/matchups?date=2026-09-10
+// GET /api/matchups?date=2026-09-10
 app.get('/api/matchups', async (req, res) => {
   try {
-    // Default to today if no date parameter is passed
     const targetDate = req.query.date || new Date().toISOString().split('T')[0];
 
+    // Convert start_time to local timezone before extracting the DATE
     const result = await db.query(`
       SELECT * FROM matchups
-      WHERE DATE(start_time) = $1
+      WHERE DATE(start_time AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York') = $1
       ORDER BY start_time ASC
     `, [targetDate]);
 

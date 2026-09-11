@@ -435,12 +435,21 @@ function renderDateBar() {
   dateBar.innerHTML = '';
   const today = new Date();
 
-  for (let i = 0; i < 5; i++) {
+  // Loop from -1 (Yesterday) up to +3 (3 days ahead)
+  for (let i = -1; i <= 3; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
     
-    const dateStr = d.toISOString().split('T')[0];
-    const label = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+    // Format date string as YYYY-MM-DD using local time numbers
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+
+    let label = d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+    if (i === -1) label = 'Yesterday';
+    if (i === 0) label = 'Today';
+    if (i === 1) label = 'Tomorrow';
 
     const btn = document.createElement('button');
     btn.className = `date-btn ${dateStr === selectedDate ? 'active' : ''}`;
@@ -453,7 +462,6 @@ function renderDateBar() {
     dateBar.appendChild(btn);
   }
 }
-
     // Initial page load
     document.addEventListener('DOMContentLoaded', () => {
       renderDateBar();
