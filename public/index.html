@@ -334,7 +334,33 @@
 <body>
 
   <div class="app-container">
-    <h1>Streak for the Cash</h1>
+    <header class="app-header">
+  <h1>Streak for the Cash</h1>
+  <div id="auth-nav">
+    <button id="login-nav-btn" class="auth-btn" onclick="openAuthModal()">Login / Register</button>
+    <div id="user-info" style="display: none;">
+      <span id="username-display"></span>
+      <button class="auth-btn logout" onclick="logout()">Logout</button>
+    </div>
+  </div>
+</header>
+
+<!-- Auth Modal -->
+<div id="auth-modal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <span class="close-btn" onclick="closeAuthModal()">&times;</span>
+    <h2 id="modal-title">Login</h2>
+    <form id="auth-form" onsubmit="handleAuth(event)">
+      <input type="text" id="auth-username" placeholder="Username" required />
+      <input type="password" id="auth-password" placeholder="Password" required />
+      <button type="submit" id="auth-submit-btn">Login</button>
+    </form>
+    <p class="toggle-auth">
+      <span id="auth-toggle-text">Need an account?</span> 
+      <a href="#" onclick="toggleAuthMode(event)" id="auth-toggle-link">Register</a>
+    </p>
+  </div>
+</div>
 
     <!-- Navigation Bar -->
     <nav class="app-nav">
@@ -397,6 +423,104 @@
   </div>
 
   <script>
+let isLoginMode = true;
+
+function checkAuthState() {
+  const token = localStorage.getItem('token');
+  const username = localStorage.getItem('username');
+
+  if (token && username) {
+    document.getElementById('login-nav-btn').style.display = 'none';
+    document.getElementById('user-info').style.display = 'flex';
+    document.getElementById('username-display').textContent = `👤 ${username}`;
+  } else {
+    document.getElementById('login-nav-btn').style.display = 'block';
+    document.getElementById('user-info').style.display = 'none';
+  }
+}
+
+function openAuthModal() {
+  document.getElementById('auth-modal').style.display = 'flex';
+}
+
+function closeAuthModal() {
+  document.getElementById('auth-modal').style.display = 'none';
+}
+
+function toggleAuthMode(e) {
+  e.preventDefault();
+  isLoginMode = !isLoginMode;
+  document.getElementById('modal-title').textContent = isLoginMode ? 'Login' : 'Register';
+  document.getElementById('auth-submit-btn').textContent = isLoginMode ? 'Login' : 'Register';
+  document.getElementById('auth-toggle-text').textContent = isLoginMode ? "Need an account?" : "Already have an account?";
+  document.getElementById('auth-toggle-link').textContent = isLoginMode ? 'Register' : 'Login';
+}
+
+async function handleAuth(e) {
+  e.preventDefault();
+  const username = document.getElementById('auth-username').value;
+  const password = document.getElementById('auth-password').value;
+  const endpoint = isLoginMode ? '/api/auth/login' : '/api/auth/register';
+
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || 'Auth failed');
+
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('username', data.user.username);
+
+    closeAuthModal();
+    checkAuthState();
+    fetchMatchups(); // Refresh matchups to display current user's picks
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+function logout() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('username');
+  checkAuthState();
+  fetchMatchups();
+}
+
+async function makePick(matchupId, selectedOption) {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    openAuthModal();
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/picks', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ matchupId, selectedOption })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to save pick');
+
+    fetchMatchups(); // Re-render picks with checkmarks
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+// Initial load check
+document.addEventListener('DOMContentLoaded', () => {
+  checkAuthState();
+});
+
     // Tab switching handler
     function showTab(tabName) {
       document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
