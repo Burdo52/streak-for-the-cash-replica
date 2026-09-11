@@ -63,13 +63,16 @@ async function fetchAndIngestMatchups(db) {
         }
 
         const propText = `${awayLabel} @ ${homeLabel}`;
+        const categoryValue = sportLabel;
 
         const dbRes = await db.query(`
-          INSERT INTO matchups (sport, prop_text, option_a, option_b, start_time, status)
-          VALUES ($1, $2, $3, $4, $5, 'scheduled')
-          ON CONFLICT (prop_text, start_time) DO NOTHING
-          RETURNING matchup_id
-        `, [sportLabel, propText, awayLabel, homeLabel, game.commence_time]);
+          INSERT INTO matchups (sport, category, prop_text, option_a, option_b, start_time, status)
+          SELECT $1, $2, $3, $4, $5, $6, 'scheduled'
+          WHERE NOT EXISTS (
+            SELECT 1 FROM matchups 
+            WHERE prop_text = $3 AND start_time = $6
+          )
+        `, [sportLabel, categoryValue, propText, awayLabel, homeLabel, game.commence_time]);
 
         if (dbRes.rowCount > 0) {
           insertedCount++;
