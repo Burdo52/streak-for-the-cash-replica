@@ -16,19 +16,27 @@
   }
 
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: var(--bg-color);
-    color: var(--text-primary);
-    margin: 0;
-    padding: 20px;
-    display: flex;
-    justify-content: center;
-  }
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  margin: 0;
+  padding: 20px;
+  /* Remove flex from body to prevent horizontal side-by-side alignment */
+  display: block; 
+}
 
-  .app-container {
-    max-width: 800px;
-    width: 100%;
-  }
+.app-container {
+  max-width: 800px;
+  margin: 0 auto; /* Centers the app container horizontally */
+  width: 100%;
+  display: flex;
+  flex-direction: column; /* Force elements inside container to stack top-to-bottom */
+}
+
+.tab-content {
+  width: 100%;
+  clear: both;
+}
 
   h1 {
     text-align: center;
@@ -194,51 +202,53 @@
 </head>
 <body>
 
-  <h1>Streak for the Cash</h1>
+  <div class="app-container">
+    <h1>Streak for the Cash</h1>
 
-  <!-- Navigation Bar -->
-  <nav class="app-nav">
-    <button class="nav-btn active" onclick="showTab('matchups')">Matchups</button>
-    <button class="nav-btn" onclick="showTab('leaderboard')">Leaderboard</button>
-    <button class="nav-btn" onclick="showTab('profile')">My Profile</button>
-  </nav>
+    <!-- Navigation Bar -->
+    <nav class="app-nav">
+      <button class="nav-btn active" onclick="showTab('matchups')">Matchups</button>
+      <button class="nav-btn" onclick="showTab('leaderboard')">Leaderboard</button>
+      <button class="nav-btn" onclick="showTab('profile')">My Profile</button>
+    </nav>
 
-  <!-- View 1: Matchups (Contains your existing matchup container) -->
-  <div id="matchups-section" class="tab-content">
-    <div id="matchups-container"></div>
-  </div>
+    <!-- View 1: Matchups -->
+    <div id="matchups-section" class="tab-content">
+      <div id="matchups-container"></div>
+    </div>
 
-  <!-- View 2: Leaderboard -->
-  <div id="leaderboard-section" class="tab-content" style="display: none;">
-    <h2>🔥 Streak Leaderboard</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Rank</th>
-          <th>User</th>
-          <th>Current Streak</th>
-          <th>Longest Streak</th>
-        </tr>
-      </thead>
-      <tbody id="leaderboard-body"></tbody>
-    </table>
-  </div>
+    <!-- View 2: Leaderboard -->
+    <div id="leaderboard-section" class="tab-content" style="display: none;">
+      <h2>🔥 Streak Leaderboard</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>User</th>
+            <th>Current Streak</th>
+            <th>Longest Streak</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboard-body"></tbody>
+      </table>
+    </div>
 
-  <!-- View 3: Profile & Pick History -->
-  <div id="profile-section" class="tab-content" style="display: none;">
-    <h2>User Profile</h2>
-    <p>Track your past picks and active streak.</p>
-    <table>
-      <thead>
-        <tr>
-          <th>Sport</th>
-          <th>Matchup</th>
-          <th>Your Pick</th>
-          <th>Outcome</th>
-        </tr>
-      </thead>
-      <tbody id="history-list"></tbody>
-    </table>
+    <!-- View 3: Profile & Pick History -->
+    <div id="profile-section" class="tab-content" style="display: none;">
+      <h2>User Profile</h2>
+      <p>Track your past picks and active streak.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Sport</th>
+            <th>Matchup</th>
+            <th>Your Pick</th>
+            <th>Outcome</th>
+          </tr>
+        </thead>
+        <tbody id="history-list"></tbody>
+      </table>
+    </div>
   </div>
 
   <script>
