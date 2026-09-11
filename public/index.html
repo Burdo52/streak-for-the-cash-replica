@@ -343,6 +343,13 @@
 
     container.innerHTML = '';
 
+    // Guard Clause: Check if the response is not an array (e.g., error object returned from server)
+    if (!Array.isArray(matchups)) {
+      console.error('Server returned non-array payload:', matchups);
+      container.innerHTML = `<p style="text-align: center; color: #f87171;">Failed to load matchups: ${matchups.error || 'Server error'}</p>`;
+      return;
+    }
+
     if (matchups.length === 0) {
       container.innerHTML = `<p style="text-align: center; color: #94a3b8;">No matchups scheduled for this date.</p>`;
       return;
@@ -355,7 +362,6 @@
       const isLocked = now >= startTime || m.status !== 'scheduled';
       const timeFormatted = startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-      // Determine which option (if any) the user selected
       const isOptionASelected = m.user_pick === m.option_a;
       const isOptionBSelected = m.user_pick === m.option_b;
 
