@@ -251,6 +251,25 @@
   border-color: #38bdf8;
   opacity: 1; /* Override opacity so user can see what they picked */
 }
+
+/* Custom Sport Badge Colors */
+.sport-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 12px;
+  color: #ffffff;
+}
+
+/* Specific League Colors */
+.sport-badge.mlb { background-color: #0284c7; }   /* Blue */
+.sport-badge.epl { background-color: #38003c; border: 1px solid #00ff87; } /* Premier League Purple */
+.sport-badge.nfl { background-color: #b91c1c; }   /* NFL Red */
+.sport-badge.ncaaf { background-color: #d97706; } /* College Gold/Orange */
 </style>
 </head>
 <body>
@@ -368,7 +387,7 @@
       const card = document.createElement('div');
       card.className = `matchup-card ${isLocked ? 'locked' : ''}`;
       card.innerHTML = `
-        <span class="sport-badge">${m.sport || 'Sports'}</span>
+        <span class="sport-badge ${(m.sport || '').toLowerCase()}">${m.sport || 'Sports'}</span>
         <h3>${m.prop_text}</h3>
         <div class="options">
           <button 
