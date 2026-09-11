@@ -111,6 +111,7 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
 // GET /api/matchups?date=2026-09-10
 // GET /api/matchups?date=2026-09-11
 // GET /api/matchups?date=2026-09-11
+// GET /api/matchups?date=2026-09-11
 app.get('/api/matchups', async (req, res) => {
   try {
     const targetDate = req.query.date || new Date().toLocaleDateString('sv-SE');
@@ -131,7 +132,7 @@ app.get('/api/matchups', async (req, res) => {
 
     const queryUserId = userId ? userId : -1;
 
-    // Join against user_picks instead of picks
+    // Use explicit timestamptz conversion for accurate Eastern local date filtering
     const result = await db.query(`
       SELECT 
         m.matchup_id,
@@ -144,7 +145,7 @@ app.get('/api/matchups', async (req, res) => {
         up.selected_option AS user_pick
       FROM matchups m
       LEFT JOIN user_picks up ON m.matchup_id = up.matchup_id AND up.user_id = $1
-      WHERE DATE(m.start_time AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York') = $2
+      WHERE DATE(m.start_time::timestamptz AT TIME ZONE 'America/New_York') = $2::date
       ORDER BY m.start_time ASC
     `, [queryUserId, targetDate]);
 
