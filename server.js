@@ -152,45 +152,30 @@ app.get('/api/matchups', async (req, res) => {
   }
 });
 
-// Make a Pick (Locks previous selection enforcement)
 app.post('/api/picks', authenticateToken, async (req, res) => {
   const matchupId = req.body.matchupId || req.body.matchup_id;
   const selectedOption = req.body.selectedOption || req.body.selected_option;
   const userId = req.user.userId || req.user.user_id;
 
+  if (!matchupId || !selectedOption) {
+    return res.status(400).json({ error: 'Missing matchupId or selectedOption' });
+  }
+
   try {
-    // 1. Fetch the matchup to verify start time and status
-    const matchupRes = await db.query(
-      'SELECT start_time, status FROM matchups WHERE matchup_id = $1',
-      [matchupId]
-    );
-
-    if (matchupRes.rows.length === 0) {
-      return res.status(404).json({ error: 'Matchup not found.' });
-    }
-
-    const matchup = matchupRes.rows[0];
-    const now = new Date();
-    const startTime = new Date(matchup.start_time);
-
-    // 2. Reject pick if the game has already started or is completed
-    if (now >= startTime || matchup.status !== 'scheduled') {
-      return res.status(400).json({ 
-        error: 'Picks are locked for this matchup because the game has already started.' 
-      });
-    }
-
-    // 3. Upsert (Insert or Update) user pick
-    await db.query(`
-      INSERT INTO user_picks (user_id, matchup_id, selected_option)
-      VALUES ($1, $2, $3)
+    // Make sure 'const result =' is explicitly declared here
+    const result = await db.query(`
+      INSERT INTO user_picks (user_id, matchup_id, selected_option, status)
+      VALUES ($1, $2, $3, 'pending')
       ON CONFLICT (user_id, matchup_id) 
-      DO UPDATE SET selected_option = EXCLUDED.selected_option, updated_at = NOW()
+      DO UPDATE SET 
+        selected_option = EXCLUDED.selected_option,
+        updated_at = CURRENT_TIMESTAMP
+      RETURNING *
     `, [userId, matchupId, selectedOption]);
 
+    // Now 'result' exists and can be safely accessed
     res.json({ success: true, pick: result.rows[0] });
   } catch (err) {
-    // This console log will show up directly in your Railway logs
     console.error('ERROR IN /api/picks:', err);
     res.status(500).json({ error: 'Failed to save pick: ' + err.message });
   }
