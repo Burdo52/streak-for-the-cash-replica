@@ -110,6 +110,7 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
 // GET /api/matchups?date=2026-09-10
 // GET /api/matchups?date=2026-09-10
 // GET /api/matchups?date=2026-09-11
+// GET /api/matchups?date=2026-09-11
 app.get('/api/matchups', async (req, res) => {
   try {
     const targetDate = req.query.date || new Date().toLocaleDateString('sv-SE');
@@ -121,16 +122,16 @@ app.get('/api/matchups', async (req, res) => {
       if (token && token !== 'null' && token !== 'undefined' && process.env.JWT_SECRET) {
         try {
           const decoded = jwt.verify(token, process.env.JWT_SECRET);
-          userId = decoded.user_id || decoded.id; // Handles different JWT payload keys
+          userId = decoded.user_id || decoded.id;
         } catch (jwtErr) {
           console.warn('JWT verification skipped:', jwtErr.message);
         }
       }
     }
 
-    // Explicit fallback if userId is null/undefined
     const queryUserId = userId ? userId : -1;
 
+    // Join against user_picks instead of picks
     const result = await db.query(`
       SELECT 
         m.matchup_id,
@@ -140,18 +141,17 @@ app.get('/api/matchups', async (req, res) => {
         m.option_b,
         m.start_time,
         m.status,
-        p.selected_option AS user_pick
+        up.selected_option AS user_pick
       FROM matchups m
-      LEFT JOIN picks p ON m.matchup_id = p.matchup_id AND p.user_id = $1
+      LEFT JOIN user_picks up ON m.matchup_id = up.matchup_id AND up.user_id = $1
       WHERE DATE(m.start_time AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York') = $2
       ORDER BY m.start_time ASC
     `, [queryUserId, targetDate]);
 
     res.json(result.rows);
   } catch (err) {
-    // Print full error to Railway console & client response for instant debugging
-    console.error('🔥 SQL ERROR IN /api/matchups:', err);
-    res.status(500).json({ error: err.message || 'Database error' });
+    console.error('Error fetching filtered matchups:', err);
+    res.status(500).json({ error: 'Failed to retrieve matchups.' });
   }
 });
 
