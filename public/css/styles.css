@@ -455,6 +455,19 @@
   .badge.loss { background-color: rgba(239, 68, 68, 0.2); color: #f87171; }
   .badge.pending { background-color: rgba(234, 179, 8, 0.2); color: #facc15; }
 
+  /* Add to public/css/styles.css under Sport Badge Styling */
+
+.sport-badge.nba { 
+  background-color: #f97316; /* NBA Basketball Orange */
+  color: #ffffff;
+}
+
+.sport-badge.nhl { 
+  background-color: #0284c7; /* NHL Ice Blue */
+  border: 1px solid #38bdf8;
+  color: #ffffff;
+}
+
   /* Mobile Media Queries */
   @media (max-width: 480px) {
     .app-header {

@@ -19,7 +19,8 @@ async function fetchAndIngestMatchups(db) {
   const rankMap = await getTop25RankMap();
   console.log(`📊 Loaded ${Object.keys(rankMap).length} ranked teams from CFBD:`, rankMap);
 
-  const sports = ['baseball_mlb', 'soccer_epl', 'americanfootball_nfl', 'americanfootball_ncaaf'];
+  const sports = ['baseball_mlb', 'soccer_epl', 'americanfootball_nfl', 'americanfootball_ncaaf', 'basketball_nba',
+  'icehockey_nhl'];
 
   for (const sportKey of sports) {
     try {
@@ -46,6 +47,8 @@ async function fetchAndIngestMatchups(db) {
         if (sportKey.includes('mlb')) sportLabel = 'MLB';
         if (sportKey.includes('epl')) sportLabel = 'EPL';
         if (sportKey.includes('nfl')) sportLabel = 'NFL';
+        if (sportKey.includes('nba')) sportLabel = 'NBA';
+        if (sportKey.includes('nhl')) sportLabel = 'NHL';
 
         if (sportKey === 'americanfootball_ncaaf') {
           sportLabel = 'NCAAF';
