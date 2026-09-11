@@ -205,6 +205,51 @@ app.get('/api/leaderboard', async (req, res) => {
   }
 });
 
+// GET /api/users/picks - Fetch pick history for the logged-in user
+app.get('/api/users/picks', authenticateToken, async (req, res) => {
+  const userId = req.user.user_id;
+
+  try {
+    const result = await db.query(`
+      SELECT 
+        p.pick_id,
+        p.selected_option,
+        p.created_at AS pick_time,
+        m.prop_text,
+        m.sport,
+        m.status AS matchup_status,
+        m.winning_option
+      FROM picks p
+      JOIN matchups m ON p.matchup_id = m.matchup_id
+      WHERE p.user_id = $1
+      ORDER BY p.created_at DESC
+    `, [userId]);
+
+    // Format win/loss outcome for each pick
+    const history = result.rows.map(row => {
+      let resultStatus = 'Pending';
+      if (row.matchup_status === 'completed') {
+        resultStatus = row.selected_option === row.winning_option ? 'Win' : 'Loss';
+      }
+
+      return {
+        pickId: row.pick_id,
+        sport: row.sport,
+        propText: row.prop_text,
+        selectedOption: row.selected_option,
+        winningOption: row.winning_option,
+        status: resultStatus,
+        date: row.pick_time
+      };
+    });
+
+    res.json(history);
+  } catch (err) {
+    console.error('Error fetching user pick history:', err);
+    res.status(500).json({ error: 'Failed to retrieve pick history.' });
+  }
+});
+
 // -------------------------------------------------------------
 // AUTOMATED CRON WORKERS (Settlement & Data Ingestion)
 // -------------------------------------------------------------

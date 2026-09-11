@@ -24,6 +24,15 @@
   background-color: #ccc;
   border-color: #bbb;
 }
+.badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 0.85rem;
+}
+.badge.win { background-color: #d4edda; color: #155724; }
+.badge.loss { background-color: #f8d7da; color: #721c24; }
+.badge.pending { background-color: #fff3cd; color: #856404; }
     </style>
 </head>
 <body>
@@ -46,6 +55,21 @@
     <tbody id="leaderboard-body">
       <!-- Dynamic rows injected here -->
     </tbody>
+  </table>
+</div>
+<!-- Pick History Section -->
+<div id="history-container" class="history-section">
+  <h2>Your Pick History</h2>
+  <table class="history-table">
+    <thead>
+      <tr>
+        <th>Sport</th>
+        <th>Matchup</th>
+        <th>Your Pick</th>
+        <th>Outcome</th>
+      </tr>
+    </thead>
+    <tbody id="history-list"></tbody>
   </table>
 </div>
     <script>
@@ -138,6 +162,47 @@
 
 // Call on page load or tab navigation
 document.addEventListener('DOMContentLoaded', loadLeaderboard);
+
+async function fetchPickHistory() {
+  const token = localStorage.getItem('token'); // Adjust to your auth storage
+  if (!token) return;
+
+  try {
+    const response = await fetch('/api/users/picks', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    if (!response.ok) throw new Error('Failed to fetch history');
+    
+    const history = await response.json();
+    const listContainer = document.getElementById('history-list');
+    if (!listContainer) return;
+
+    listContainer.innerHTML = '';
+
+    history.forEach(item => {
+      const row = document.createElement('tr');
+      
+      // Apply status classes for styling
+      let statusBadge = '<span class="badge pending">⏳ Pending</span>';
+      if (item.status === 'Win') {
+        statusBadge = '<span class="badge win">✅ Win</span>';
+      } else if (item.status === 'Loss') {
+        statusBadge = '<span class="badge loss">❌ Loss</span>';
+      }
+
+      row.innerHTML = `
+        <td>${item.sport}</td>
+        <td>${item.propText}</td>
+        <td><strong>${item.selectedOption}</strong></td>
+        <td>${statusBadge}</td>
+      `;
+      listContainer.appendChild(row);
+    });
+  } catch (err) {
+    console.error('Error rendering pick history:', err);
+  }
+}
     </script>
 </body>
 </html>
