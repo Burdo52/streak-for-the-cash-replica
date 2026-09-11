@@ -108,16 +108,34 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
 // Fetch Active Matchups
 // GET /api/matchups?date=2026-09-10
 // GET /api/matchups?date=2026-09-10
+// GET /api/matchups?date=2026-09-10
 app.get('/api/matchups', async (req, res) => {
   try {
-    // Rely on client query param or format server local date
-    const targetDate = req.query.date || new Date().toLocaleDateString('sv-SE'); // 'sv-SE' outputs YYYY-MM-DD
+    const targetDate = req.query.date || new Date().toLocaleDateString('sv-SE');
+    
+    // Extract user ID from optional Auth header if present
+    let userId = null;
+    const authHeader = req.headers['authorization'];
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        userId = decoded.user_id;
+      } catch (err) {
+        // Token expired/invalid - proceed without user_id
+      }
+    }
 
+    // Join picks table to retrieve user's choice
     const result = await db.query(`
-      SELECT * FROM matchups
-      WHERE DATE(start_time AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York') = $1
-      ORDER BY start_time ASC
-    `, [targetDate]);
+      SELECT 
+        m.*,
+        p.selected_option AS user_pick
+      FROM matchups m
+      LEFT JOIN picks p ON m.matchup_id = p.matchup_id AND p.user_id = $1
+      WHERE DATE(m.start_time AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York') = $2
+      ORDER BY m.start_time ASC
+    `, [userId, targetDate]);
 
     res.json(result.rows);
   } catch (err) {

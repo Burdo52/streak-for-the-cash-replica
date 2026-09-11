@@ -234,6 +234,23 @@
   color: #0f172a;
   border-color: #38bdf8;
 }
+
+/* Highlighted state for user's selected option */
+.pick-btn.selected {
+  background-color: #38bdf8;
+  color: #0f172a;
+  border-color: #38bdf8;
+  font-weight: 800;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+}
+
+/* Maintain active look even if game is locked */
+.pick-btn.selected:disabled {
+  background-color: #0284c7;
+  color: #ffffff;
+  border-color: #38bdf8;
+  opacity: 1; /* Override opacity so user can see what they picked */
+}
 </style>
 </head>
 <body>
@@ -315,7 +332,10 @@
     // Existing Matchups Fetch
     async function fetchMatchups(dateStr = selectedDate) {
   try {
-    const response = await fetch(`/api/matchups?date=${dateStr}`);
+    const token = localStorage.getItem('token');
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
+    const response = await fetch(`/api/matchups?date=${dateStr}`, { headers });
     const matchups = await response.json();
     
     const container = document.getElementById('matchups-container'); 
@@ -335,6 +355,10 @@
       const isLocked = now >= startTime || m.status !== 'scheduled';
       const timeFormatted = startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+      // Determine which option (if any) the user selected
+      const isOptionASelected = m.user_pick === m.option_a;
+      const isOptionBSelected = m.user_pick === m.option_b;
+
       const card = document.createElement('div');
       card.className = `matchup-card ${isLocked ? 'locked' : ''}`;
       card.innerHTML = `
@@ -342,16 +366,16 @@
         <h3>${m.prop_text}</h3>
         <div class="options">
           <button 
-            class="pick-btn" 
+            class="pick-btn ${isOptionASelected ? 'selected' : ''}" 
             ${isLocked ? 'disabled' : ''} 
             onclick="makePick(${m.matchup_id}, '${m.option_a}')">
-            ${m.option_a}
+            ${m.option_a} ${isOptionASelected ? '✓' : ''}
           </button>
           <button 
-            class="pick-btn" 
+            class="pick-btn ${isOptionBSelected ? 'selected' : ''}" 
             ${isLocked ? 'disabled' : ''} 
             onclick="makePick(${m.matchup_id}, '${m.option_b}')">
-            ${m.option_b}
+            ${m.option_b} ${isOptionBSelected ? '✓' : ''}
           </button>
         </div>
         <p class="status-label">
@@ -466,6 +490,35 @@ function renderDateBar() {
       fetchMatchups(selectedDate);
     };
     dateBar.appendChild(btn);
+  }
+}
+
+async function makePick(matchupId, selectedOption) {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    alert('Please log in to make a pick.');
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/picks', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ matchup_id: matchupId, selected_option: selectedOption })
+    });
+
+    if (response.ok) {
+      // Re-fetch matchups to trigger the highlighted selected state
+      fetchMatchups(selectedDate); 
+    } else {
+      const err = await response.json();
+      alert(err.error || 'Failed to submit pick.');
+    }
+  } catch (err) {
+    console.error('Error making pick:', err);
   }
 }
     // Initial page load
