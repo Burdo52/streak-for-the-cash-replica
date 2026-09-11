@@ -110,9 +110,9 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
 // GET /api/matchups?date=2026-09-10
 app.get('/api/matchups', async (req, res) => {
   try {
-    const targetDate = req.query.date || new Date().toISOString().split('T')[0];
+    // Rely on client query param or format server local date
+    const targetDate = req.query.date || new Date().toLocaleDateString('sv-SE'); // 'sv-SE' outputs YYYY-MM-DD
 
-    // Convert start_time to local timezone before extracting the DATE
     const result = await db.query(`
       SELECT * FROM matchups
       WHERE DATE(start_time AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York') = $1

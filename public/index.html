@@ -425,7 +425,16 @@
       }
     }
 
-    let selectedDate = new Date().toISOString().split('T')[0];
+    // Helper to format a Date object as YYYY-MM-DD using LOCAL time (not UTC)
+function getLocalDateString(dateObj = new Date()) {
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+// Initialize selectedDate with local day string
+let selectedDate = getLocalDateString();
 
 // Render dynamic day buttons (Today + next 4 days)
 function renderDateBar() {
@@ -440,11 +449,8 @@ function renderDateBar() {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
     
-    // Format date string as YYYY-MM-DD using local time numbers
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    const dateStr = `${year}-${month}-${day}`;
+    // Use local time formatting
+    const dateStr = getLocalDateString(d);
 
     let label = d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
     if (i === -1) label = 'Yesterday';
