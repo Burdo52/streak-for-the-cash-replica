@@ -154,14 +154,15 @@ app.get('/api/matchups', async (req, res) => {
 
 // Make a Pick (Locks previous selection enforcement)
 app.post('/api/picks', authenticateToken, async (req, res) => {
-  const { matchup_id, selected_option } = req.body;
-  const userId = req.user.user_id;
+  const matchupId = req.body.matchupId || req.body.matchup_id;
+  const selectedOption = req.body.selectedOption || req.body.selected_option;
+  const userId = req.user.userId || req.user.user_id;
 
   try {
     // 1. Fetch the matchup to verify start time and status
     const matchupRes = await db.query(
       'SELECT start_time, status FROM matchups WHERE matchup_id = $1',
-      [matchup_id]
+      [matchupId]
     );
 
     if (matchupRes.rows.length === 0) {
@@ -185,12 +186,13 @@ app.post('/api/picks', authenticateToken, async (req, res) => {
       VALUES ($1, $2, $3)
       ON CONFLICT (user_id, matchup_id) 
       DO UPDATE SET selected_option = EXCLUDED.selected_option, updated_at = NOW()
-    `, [userId, matchup_id, selected_option]);
+    `, [userId, matchupId, selectedOption]);
 
-    res.json({ message: 'Pick successfully submitted!' });
+    res.json({ success: true, pick: result.rows[0] });
   } catch (err) {
-    console.error('Error submitting pick:', err);
-    res.status(500).json({ error: 'Failed to submit pick.' });
+    // This console log will show up directly in your Railway logs
+    console.error('ERROR IN /api/picks:', err);
+    res.status(500).json({ error: 'Failed to save pick: ' + err.message });
   }
 });
 
