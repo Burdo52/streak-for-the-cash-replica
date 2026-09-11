@@ -115,36 +115,43 @@ app.get('/api/matchups', async (req, res) => {
     const targetDate = req.query.date || new Date().toLocaleDateString('sv-SE');
     let userId = null;
 
-    // Safely check and verify the JWT token
     const authHeader = req.headers['authorization'];
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1];
-      if (token && token !== 'null' && token !== 'undefined') {
+      if (token && token !== 'null' && token !== 'undefined' && process.env.JWT_SECRET) {
         try {
           const decoded = jwt.verify(token, process.env.JWT_SECRET);
-          userId = decoded.user_id;
+          userId = decoded.user_id || decoded.id; // Handles different JWT payload keys
         } catch (jwtErr) {
-          // Token is expired, bad signature, or malformed -> ignore user_id, don't fail the request
-          console.warn('Invalid JWT token supplied, proceeding as unauthenticated user.');
+          console.warn('JWT verification skipped:', jwtErr.message);
         }
       }
     }
 
-    // Query database with timezone conversion
+    // Explicit fallback if userId is null/undefined
+    const queryUserId = userId ? userId : -1;
+
     const result = await db.query(`
       SELECT 
-        m.*,
+        m.matchup_id,
+        m.sport,
+        m.prop_text,
+        m.option_a,
+        m.option_b,
+        m.start_time,
+        m.status,
         p.selected_option AS user_pick
       FROM matchups m
       LEFT JOIN picks p ON m.matchup_id = p.matchup_id AND p.user_id = $1
       WHERE DATE(m.start_time AT TIME ZONE 'UTC' AT TIME ZONE 'America/New_York') = $2
       ORDER BY m.start_time ASC
-    `, [userId, targetDate]);
+    `, [queryUserId, targetDate]);
 
     res.json(result.rows);
   } catch (err) {
-    console.error('Database query error in GET /api/matchups:', err);
-    res.status(500).json({ error: 'Failed to retrieve matchups.' });
+    // Print full error to Railway console & client response for instant debugging
+    console.error('🔥 SQL ERROR IN /api/matchups:', err);
+    res.status(500).json({ error: err.message || 'Database error' });
   }
 });
 
