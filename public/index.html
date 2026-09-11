@@ -5,19 +5,192 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Streak for the Cash</title>
   <style>
-    body { font-family: sans-serif; margin: 20px; }
-    .app-nav { display: flex; gap: 10px; margin-bottom: 20px; }
-    .nav-btn { padding: 10px 16px; border: 1px solid #ccc; background: #f8f9fa; cursor: pointer; border-radius: 6px; font-weight: bold; }
-    .nav-btn.active { background: #007bff; color: white; border-color: #007bff; }
-    .matchup-card.locked { opacity: 0.6; background-color: #f4f4f4; }
-    .pick-btn:disabled { cursor: not-allowed; background-color: #ccc; border-color: #bbb; }
-    .badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.85rem; }
-    .badge.win { background-color: #d4edda; color: #155724; }
-    .badge.loss { background-color: #f8d7da; color: #721c24; }
-    .badge.pending { background-color: #fff3cd; color: #856404; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #ddd; }
-  </style>
+  :root {
+    --bg-color: #0f172a;
+    --card-bg: #1e293b;
+    --accent-color: #38bdf8;
+    --accent-hover: #0284c7;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --border-color: #334155;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .app-container {
+    max-width: 800px;
+    width: 100%;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 24px;
+    background: linear-gradient(90deg, #38bdf8, #818cf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Navigation Bar */
+  .app-nav {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 24px;
+    background: #1e293b;
+    padding: 6px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+  }
+
+  .nav-btn {
+    flex: 1;
+    padding: 10px 16px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+
+  .nav-btn.active {
+    background: var(--accent-color);
+    color: #0f172a;
+  }
+
+  .nav-btn:hover:not(.active) {
+    color: var(--text-primary);
+  }
+
+  /* Matchup Cards Grid */
+  #matchups-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .matchup-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+  }
+
+  .matchup-card:hover {
+    border-color: #475569;
+    transform: translateY(-2px);
+  }
+
+  .sport-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    background-color: rgba(56, 189, 248, 0.1);
+    color: var(--accent-color);
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+  }
+
+  .matchup-card h3 {
+    margin: 0 0 16px 0;
+    font-size: 1.15rem;
+    line-height: 1.4;
+  }
+
+  /* Selection Buttons */
+  .options {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .pick-btn {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    background-color: #0f172a;
+    color: var(--text-primary);
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .pick-btn:hover:not(:disabled) {
+    border-color: var(--accent-color);
+    background-color: rgba(56, 189, 248, 0.1);
+    color: var(--accent-color);
+  }
+
+  .matchup-card.locked {
+    opacity: 0.55;
+  }
+
+  .pick-btn:disabled {
+    cursor: not-allowed;
+    border-color: #334155;
+    color: #64748b;
+  }
+
+  .status-label {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
+  /* Tables for Leaderboard & Profile */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--card-bg);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+  }
+
+  th, td {
+    padding: 14px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  th {
+    background-color: #0f172a;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* Status Badges */
+  .badge {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.8rem;
+  }
+  .badge.win { background-color: rgba(34, 197, 94, 0.2); color: #4ade80; }
+  .badge.loss { background-color: rgba(239, 68, 68, 0.2); color: #f87171; }
+  .badge.pending { background-color: rgba(234, 179, 8, 0.2); color: #facc15; }
+</style>
 </head>
 <body>
 
