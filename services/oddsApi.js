@@ -9,74 +9,76 @@ const axios = require('axios');
  * Fetches active upcoming sports events and generates Streak props
  */
 async function fetchAndIngestMatchups(db) {
-  const apiKey = ODDS_API_KEY;
+  const apiKey = process.env.ODDS_API_KEY;
   if (!apiKey) {
-    console.error('Missing ODDS_API_KEY in environment variables');
+    console.error('❌ Ingestion Error: Missing ODDS_API_KEY');
     return;
   }
 
-  // Pull dynamic AP Top 25 list
+  console.log('🔄 Fetching Top 25 Rank Map from CFBD...');
   const rankMap = await getTop25RankMap();
+  console.log(`📊 Loaded ${Object.keys(rankMap).length} ranked teams from CFBD:`, rankMap);
 
-  // Sports to ingest
-  const sports = [
-    'baseball_mlb',
-    'soccer_epl',
-    'americanfootball_nfl',
-    'americanfootball_ncaaf'
-  ];
+  const sports = ['baseball_mlb', 'soccer_epl', 'americanfootball_nfl', 'americanfootball_ncaaf'];
 
   for (const sportKey of sports) {
     try {
-      console.log(`Fetching odds for ${sportKey}...`);
+      console.log(`\n🔍 Fetching odds for ${sportKey}...`);
       const response = await axios.get(`https://api.the-odds-api.com/v4/sports/${sportKey}/odds`, {
-        params: {
-          apiKey: apiKey,
-          regions: 'us',
-          markets: 'h2h', // Head-to-head / Moneyline
-          dateFormat: 'iso'
+        params: { 
+          apiKey, 
+          regions: 'us', 
+          markets: 'h2h', 
+          dateFormat: 'iso' 
         }
       });
 
       const games = response.data;
+      console.log(`📦 Received ${games.length} raw games for ${sportKey}`);
+
+      let insertedCount = 0;
 
       for (const game of games) {
         let awayLabel = game.away_team;
         let homeLabel = game.home_team;
+        let sportLabel = 'Sports';
+
+        if (sportKey.includes('mlb')) sportLabel = 'MLB';
+        if (sportKey.includes('epl')) sportLabel = 'EPL';
+        if (sportKey.includes('nfl')) sportLabel = 'NFL';
 
         if (sportKey === 'americanfootball_ncaaf') {
+          sportLabel = 'NCAAF';
+
           const isAwayRanked = Object.keys(rankMap).some(s => game.away_team.toLowerCase().includes(s));
           const isHomeRanked = Object.keys(rankMap).some(s => game.home_team.toLowerCase().includes(s));
 
-          // Skip non-ranked matchups
-          if (!isAwayRanked && !isHomeRanked) continue;
+          if (!isAwayRanked && !isHomeRanked) {
+            console.log(`   ⏭️ Skipping unranked NCAAF: ${game.away_team} vs ${game.home_team}`);
+            continue;
+          }
 
-          // Add ranking prefix to team strings
           awayLabel = formatTeamWithRank(game.away_team, rankMap);
           homeLabel = formatTeamWithRank(game.home_team, rankMap);
         }
 
-        // Format sport label for UI display
-        let sportLabel = 'Sports';
-        if (sportKey.includes('mlb')) sportLabel = 'MLB';
-        if (sportKey.includes('epl')) sportLabel = 'EPL';
-        if (sportKey.includes('nfl')) sportLabel = 'NFL';
-        if (sportKey.includes('ncaaf')) sportLabel = 'NCAAF';
-
         const propText = `${awayLabel} @ ${homeLabel}`;
-        const optionA = awayLabel;
-        const optionB = homeLabel;
-        const startTime = game.commence_time;
 
-        // Upsert matchup into database (prevents duplicate entries)
-        await db.query(`
+        const dbRes = await db.query(`
           INSERT INTO matchups (sport, prop_text, option_a, option_b, start_time, status)
           VALUES ($1, $2, $3, $4, $5, 'scheduled')
           ON CONFLICT (prop_text, start_time) DO NOTHING
-        `, [sportLabel, propText, optionA, optionB, startTime]);
+          RETURNING matchup_id
+        `, [sportLabel, propText, awayLabel, homeLabel, game.commence_time]);
+
+        if (dbRes.rowCount > 0) {
+          insertedCount++;
+        }
       }
+
+      console.log(`✅ Ingested ${insertedCount} new matchups for ${sportKey}`);
     } catch (err) {
-      console.error(`Error ingesting ${sportKey}:`, err.message);
+      console.error(`❌ Error processing ${sportKey}:`, err.response ? err.response.data : err.message);
     }
   }
 }
