@@ -109,24 +109,28 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
 // GET /api/matchups?date=2026-09-10
 // GET /api/matchups?date=2026-09-10
 // GET /api/matchups?date=2026-09-10
+// GET /api/matchups?date=2026-09-11
 app.get('/api/matchups', async (req, res) => {
   try {
     const targetDate = req.query.date || new Date().toLocaleDateString('sv-SE');
-    
-    // Extract user ID from optional Auth header if present
     let userId = null;
+
+    // Safely check and verify the JWT token
     const authHeader = req.headers['authorization'];
     if (authHeader && authHeader.startsWith('Bearer ')) {
-      try {
-        const token = authHeader.split(' ')[1];
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        userId = decoded.user_id;
-      } catch (err) {
-        // Token expired/invalid - proceed without user_id
+      const token = authHeader.split(' ')[1];
+      if (token && token !== 'null' && token !== 'undefined') {
+        try {
+          const decoded = jwt.verify(token, process.env.JWT_SECRET);
+          userId = decoded.user_id;
+        } catch (jwtErr) {
+          // Token is expired, bad signature, or malformed -> ignore user_id, don't fail the request
+          console.warn('Invalid JWT token supplied, proceeding as unauthenticated user.');
+        }
       }
     }
 
-    // Join picks table to retrieve user's choice
+    // Query database with timezone conversion
     const result = await db.query(`
       SELECT 
         m.*,
@@ -139,7 +143,7 @@ app.get('/api/matchups', async (req, res) => {
 
     res.json(result.rows);
   } catch (err) {
-    console.error('Error fetching filtered matchups:', err);
+    console.error('Database query error in GET /api/matchups:', err);
     res.status(500).json({ error: 'Failed to retrieve matchups.' });
   }
 });
