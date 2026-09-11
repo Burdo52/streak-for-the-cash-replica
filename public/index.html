@@ -202,6 +202,38 @@
   .badge.win { background-color: rgba(34, 197, 94, 0.2); color: #4ade80; }
   .badge.loss { background-color: rgba(239, 68, 68, 0.2); color: #f87171; }
   .badge.pending { background-color: rgba(234, 179, 8, 0.2); color: #facc15; }
+
+  .date-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.date-btn {
+  padding: 8px 14px;
+  border: 1px solid #475569;
+  background-color: #1e293b;
+  color: #94a3b8;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.date-btn:hover {
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+.date-btn.active {
+  background-color: #38bdf8;
+  color: #0f172a;
+  border-color: #38bdf8;
+}
 </style>
 </head>
 <body>
@@ -218,6 +250,13 @@
 
     <!-- View 1: Matchups -->
     <div id="matchups-section" class="tab-content">
+      <!-- Inside View 1: Matchups Section -->
+<div id="matchups-section" class="tab-content">
+  <!-- Date Navigation Bar -->
+  <div class="date-bar" id="date-bar"></div>
+
+  <div id="matchups-container"></div>
+</div>
       <div id="matchups-container"></div>
     </div>
 
@@ -274,23 +313,26 @@
     }
 
     // Existing Matchups Fetch
-    async function fetchMatchups() {
+    async function fetchMatchups(dateStr = selectedDate) {
   try {
-    const response = await fetch('/api/matchups');
+    const response = await fetch(`/api/matchups?date=${dateStr}`);
     const matchups = await response.json();
     
     const container = document.getElementById('matchups-container'); 
     if (!container) return;
 
     container.innerHTML = '';
+
+    if (matchups.length === 0) {
+      container.innerHTML = `<p style="text-align: center; color: #94a3b8;">No matchups scheduled for this date.</p>`;
+      return;
+    }
+
     const now = new Date();
 
     matchups.forEach(m => {
       const startTime = new Date(m.start_time);
       const isLocked = now >= startTime || m.status !== 'scheduled';
-
-      // Format date (e.g., "Sep 10") and time (e.g., "7:00 PM")
-      const dateFormatted = startTime.toLocaleDateString([], { month: 'short', day: 'numeric' });
       const timeFormatted = startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
       const card = document.createElement('div');
@@ -313,7 +355,7 @@
           </button>
         </div>
         <p class="status-label">
-          ${isLocked ? '🔒 Locked' : `Starts: ${dateFormatted} at ${timeFormatted}`}
+          ${isLocked ? '🔒 Locked' : `Starts: ${timeFormatted}`}
         </p>
       `;
       container.appendChild(card);
@@ -383,8 +425,38 @@
       }
     }
 
+    let selectedDate = new Date().toISOString().split('T')[0];
+
+// Render dynamic day buttons (Today + next 4 days)
+function renderDateBar() {
+  const dateBar = document.getElementById('date-bar');
+  if (!dateBar) return;
+  
+  dateBar.innerHTML = '';
+  const today = new Date();
+
+  for (let i = 0; i < 5; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    
+    const dateStr = d.toISOString().split('T')[0];
+    const label = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+
+    const btn = document.createElement('button');
+    btn.className = `date-btn ${dateStr === selectedDate ? 'active' : ''}`;
+    btn.textContent = label;
+    btn.onclick = () => {
+      selectedDate = dateStr;
+      renderDateBar();
+      fetchMatchups(selectedDate);
+    };
+    dateBar.appendChild(btn);
+  }
+}
+
     // Initial page load
     document.addEventListener('DOMContentLoaded', () => {
+      renderDateBar();
       fetchMatchups();
     });
   </script>

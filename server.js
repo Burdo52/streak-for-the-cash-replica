@@ -106,27 +106,23 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
 // -------------------------------------------------------------
 
 // Fetch Active Matchups
+// GET /api/matchups?date=2026-09-10
 app.get('/api/matchups', async (req, res) => {
-    try {
-        const result = await db.query(`
-            SELECT 
-                matchup_id, 
-                sport, 
-                category, 
-                prop_text, 
-                option_a, 
-                option_b, 
-                start_time, 
-                status 
-            FROM matchups 
-            WHERE status IN ('scheduled', 'pending')
-            ORDER BY start_time ASC
-        `);
-        res.json(result.rows);
-    } catch (err) {
-        console.error('Error fetching matchups:', err);
-        res.status(500).json({ error: 'Failed to retrieve matchups' });
-    }
+  try {
+    // Default to today if no date parameter is passed
+    const targetDate = req.query.date || new Date().toISOString().split('T')[0];
+
+    const result = await db.query(`
+      SELECT * FROM matchups
+      WHERE DATE(start_time) = $1
+      ORDER BY start_time ASC
+    `, [targetDate]);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching filtered matchups:', err);
+    res.status(500).json({ error: 'Failed to retrieve matchups.' });
+  }
 });
 
 // Make a Pick (Locks previous selection enforcement)
