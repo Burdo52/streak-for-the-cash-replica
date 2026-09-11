@@ -1,0 +1,470 @@
+
+  :root {
+    --bg-color: #0f172a;
+    --card-bg: #1e293b;
+    --accent-color: #38bdf8;
+    --accent-hover: #0284c7;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --border-color: #334155;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    margin: 0;
+    padding: 20px;
+    display: block; 
+  }
+
+  .app-container {
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* App Header & Auth Navigation Bar */
+  .app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    background-color: #1e293b;
+    border-bottom: 1px solid var(--border-color);
+    border-radius: 12px;
+    margin-bottom: 24px;
+  }
+
+  .app-header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 800;
+    background: linear-gradient(90deg, #38bdf8, #818cf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+  }
+
+  #auth-nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  /* Auth Buttons */
+  .auth-btn {
+    background-color: #38bdf8;
+    color: #0f172a;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 18px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(56, 189, 248, 0.25);
+  }
+
+  .auth-btn:hover {
+    background-color: #7dd3fc;
+    transform: translateY(-1px);
+  }
+
+  .auth-btn.logout {
+    background-color: #334155;
+    color: #94a3b8;
+    box-shadow: none;
+  }
+
+  .auth-btn.logout:hover {
+    background-color: #f87171;
+    color: #ffffff;
+  }
+
+  /* User Info Display */
+  #user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background-color: #0f172a;
+    padding: 4px 6px 4px 14px;
+    border-radius: 24px;
+    border: 1px solid #334155;
+  }
+
+  #username-display {
+    color: #38bdf8;
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+
+  /* Navigation Bar */
+  .app-nav {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 24px;
+    background: #1e293b;
+    padding: 6px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+  }
+
+  .nav-btn {
+    flex: 1;
+    padding: 10px 16px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+
+  .nav-btn.active {
+    background: var(--accent-color);
+    color: #0f172a;
+  }
+
+  .nav-btn:hover:not(.active) {
+    color: var(--text-primary);
+  }
+
+  .tab-content {
+    width: 100%;
+    clear: both;
+  }
+
+  /* Date Bar */
+  .date-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .date-btn {
+    padding: 8px 14px;
+    border: 1px solid #475569;
+    background-color: #1e293b;
+    color: #94a3b8;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+  }
+
+  .date-btn:hover {
+    border-color: #38bdf8;
+    color: #ffffff;
+  }
+
+  .date-btn.active {
+    background-color: #38bdf8;
+    color: #0f172a;
+    border-color: #38bdf8;
+  }
+
+  /* Filter Bar Styling */
+  .filter-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .filter-btn {
+    background-color: #1e293b;
+    color: #94a3b8;
+    border: 1px solid #334155;
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+  }
+
+  .filter-btn:hover {
+    background-color: #334155;
+    color: #f8fafc;
+  }
+
+  .filter-btn.active {
+    background-color: #38bdf8;
+    color: #0f172a;
+    border-color: #38bdf8;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+  }
+
+  /* Matchup Cards Grid */
+  #matchups-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .matchup-card {
+    background-color: #334155;
+    border: 1px solid #475569;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+  }
+
+  .matchup-card:hover {
+    border-color: #38bdf8;
+    transform: translateY(-2px);
+  }
+
+  .matchup-card.locked {
+    opacity: 0.65;
+    background-color: #1e293b;
+  }
+
+  .matchup-card h3 {
+    margin: 0 0 16px 0;
+    font-size: 1.2rem;
+    line-height: 1.4;
+    color: #ffffff;
+  }
+
+  /* Sport Badge Styling */
+  .sport-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 12px;
+    color: #ffffff;
+    background-color: #64748b;
+  }
+
+  .sport-badge.mlb { background-color: #0284c7; }
+  .sport-badge.epl { background-color: #38003c; border: 1px solid #00ff87; color: #00ff87; }
+  .sport-badge.nfl { background-color: #b91c1c; }
+  .sport-badge.ncaaf { background-color: #d97706; }
+
+  /* Selection Buttons */
+  .options {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .pick-btn {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid #64748b;
+    background-color: #1e293b;
+    color: #f8fafc;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .pick-btn:hover:not(:disabled) {
+    border-color: #38bdf8;
+    background-color: #38bdf8;
+    color: #0f172a;
+  }
+
+  .pick-btn:disabled {
+    cursor: not-allowed;
+    border-color: #334155;
+    color: #64748b;
+  }
+
+  .pick-btn.selected {
+    background-color: #38bdf8;
+    color: #0f172a;
+    border-color: #38bdf8;
+    font-weight: 800;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+  }
+
+  .pick-btn.selected:disabled {
+    background-color: #0284c7;
+    color: #ffffff;
+    border-color: #38bdf8;
+    opacity: 1;
+  }
+
+  .status-label {
+    margin-top: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #cbd5e1;
+  }
+
+  /* Auth Modal Styling */
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .modal-content {
+    background-color: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 16px;
+    padding: 32px;
+    width: 100%;
+    max-width: 380px;
+    position: relative;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+  }
+
+  .modal-content h2 {
+    margin: 0 0 20px 0;
+    color: #f8fafc;
+    font-size: 1.25rem;
+    text-align: center;
+  }
+
+  .close-btn {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    color: #94a3b8;
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .close-btn:hover {
+    color: #f8fafc;
+  }
+
+  #auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  #auth-form input {
+    background-color: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 12px;
+    color: #f8fafc;
+    font-size: 0.95rem;
+    outline: none;
+  }
+
+  #auth-form input:focus {
+    border-color: #38bdf8;
+  }
+
+  #auth-submit-btn {
+    background-color: #38bdf8;
+    color: #0f172a;
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 6px;
+  }
+
+  #auth-submit-btn:hover {
+    background-color: #7dd3fc;
+  }
+
+  .toggle-auth {
+    text-align: center;
+    margin-top: 18px;
+    font-size: 0.875rem;
+    color: #94a3b8;
+  }
+
+  .toggle-auth a {
+    color: #38bdf8;
+    text-decoration: none;
+    font-weight: 700;
+  }
+
+  .toggle-auth a:hover {
+    text-decoration: underline;
+  }
+
+  /* Tables for Leaderboard & Profile */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--card-bg);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+  }
+
+  th, td {
+    padding: 14px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  th {
+    background-color: #0f172a;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* Status Badges */
+  .badge {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.8rem;
+  }
+  .badge.win { background-color: rgba(34, 197, 94, 0.2); color: #4ade80; }
+  .badge.loss { background-color: rgba(239, 68, 68, 0.2); color: #f87171; }
+  .badge.pending { background-color: rgba(234, 179, 8, 0.2); color: #facc15; }
+
+  /* Mobile Media Queries */
+  @media (max-width: 480px) {
+    .app-header {
+      padding: 12px 16px;
+    }
+    .app-header h1 {
+      font-size: 1.15rem;
+    }
+    .auth-btn {
+      padding: 6px 12px;
+      font-size: 0.8rem;
+    }
+  }
