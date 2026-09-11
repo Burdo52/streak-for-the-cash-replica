@@ -101,17 +101,37 @@
   transform: translateY(-2px);
 }
 
-  .sport-badge {
+  /* Base Sport Badge Styling */
+.sport-badge {
   display: inline-block;
   padding: 4px 12px;
-  background-color: #0284c7; /* Solid bright blue badge */
-  color: #ffffff;
   border-radius: 20px;
   font-size: 0.75rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.6px;
   margin-bottom: 12px;
+  color: #ffffff;
+  background-color: #64748b; /* Slate fallback for generic sports */
+}
+
+/* Specific League Accent Colors */
+.sport-badge.mlb { 
+  background-color: #0284c7; /* MLB Blue */
+}
+
+.sport-badge.epl { 
+  background-color: #38003c; /* Premier League Dark Purple */
+  border: 1px solid #00ff87;  /* Neon Mint Border Accent */
+  color: #00ff87;
+}
+
+.sport-badge.nfl { 
+  background-color: #b91c1c; /* Shield Red */
+}
+
+.sport-badge.ncaaf { 
+  background-color: #d97706; /* College Gold / Football Leather */
 }
 
   .matchup-card h3 {
@@ -388,10 +408,12 @@
       const isOptionASelected = m.user_pick === m.option_a;
       const isOptionBSelected = m.user_pick === m.option_b;
 
+      const sportClass = (m.sport || '').toLowerCase().trim();
+
       const card = document.createElement('div');
       card.className = `matchup-card ${isLocked ? 'locked' : ''}`;
       card.innerHTML = `
-        <span class="sport-badge ${(m.sport || '').toLowerCase()}">${m.sport || 'Sports'}</span>
+        <span class="sport-badge ${sportClass}">${m.sport || 'Sports'}</span>
         <h3>${m.prop_text}</h3>
         <div class="options">
           <button 
