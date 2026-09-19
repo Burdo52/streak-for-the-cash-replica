@@ -58,8 +58,8 @@
   <button class="filter-btn" onclick="setSportFilter('EPL')">EPL</button>
   <button class="filter-btn" onclick="setSportFilter('NFL')">NFL</button>
   <button class="filter-btn" onclick="setSportFilter('NCAAF')">NCAAF</button>
-  <button class="filter-btn" onclick="filterSport('NBA')">NBA</button>
-  <button class="filter-btn" onclick="filterSport('NHL')">NHL</button>
+  <button class="filter-btn" onclick="setSportFilter('NBA')">NBA</button>
+  <button class="filter-btn" onclick="setSportFilter('NHL')">NHL</button>
 </div>
 
 <!-- Matchups Container -->
@@ -101,6 +101,15 @@
 
   <script>
 let isLoginMode = true;
+let selectedSport = 'ALL';
+let selectedDate = getLocalDateString();
+
+function getLocalDateString(dateObj = new Date()) {
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
 function checkAuthState() {
   const token = localStorage.getItem('token');
@@ -154,7 +163,7 @@ async function handleAuth(e) {
 
     closeAuthModal();
     checkAuthState();
-    fetchMatchups(); // Refresh matchups to display current user's picks
+    fetchMatchups(selectedDate);
   } catch (err) {
     alert(err.message);
   }
@@ -164,7 +173,7 @@ function logout() {
   localStorage.removeItem('token');
   localStorage.removeItem('username');
   checkAuthState();
-  fetchMatchups();
+  fetchMatchups(selectedDate);
 }
 
 async function makePick(matchupId, selectedOption) {
@@ -175,7 +184,7 @@ async function makePick(matchupId, selectedOption) {
   }
 
   try {
-    const res = await fetch('/api/picks', {
+    const response = await fetch('/api/picks', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -184,49 +193,69 @@ async function makePick(matchupId, selectedOption) {
       body: JSON.stringify({ matchupId, selectedOption })
     });
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to save pick');
-
-    fetchMatchups(); // Re-render picks with checkmarks
+    if (response.ok) {
+      // Instantly re-fetch matchups to highlight the selected pick visually
+      fetchMatchups(selectedDate);
+    } else {
+      const err = await response.json();
+      alert(err.error || 'Failed to submit pick.');
+    }
   } catch (err) {
-    alert(err.message);
+    console.error('Error making pick:', err);
   }
 }
 
-// Initial load check
-document.addEventListener('DOMContentLoaded', () => {
-  checkAuthState();
-});
+function showTab(tabName) {
+  document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+  document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
 
-    // Tab switching handler
-    function showTab(tabName) {
-      document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
-      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-
-      if (tabName === 'matchups') {
-        document.getElementById('matchups-section').style.display = 'block';
-        fetchMatchups();
-      } else if (tabName === 'leaderboard') {
-        document.getElementById('leaderboard-section').style.display = 'block';
-        loadLeaderboard();
-      } else if (tabName === 'profile') {
-        document.getElementById('profile-section').style.display = 'block';
-        fetchPickHistory();
-      }
-    }
-
-    let selectedSport = 'ALL'; // Global state for active league filter
+  if (tabName === 'matchups') {
+    document.getElementById('matchups-section').style.display = 'block';
+    fetchMatchups(selectedDate);
+  } else if (tabName === 'leaderboard') {
+    document.getElementById('leaderboard-section').style.display = 'block';
+    loadLeaderboard();
+  } else if (tabName === 'profile') {
+    document.getElementById('profile-section').style.display = 'block';
+    fetchPickHistory();
+  }
+}
 
 function setSportFilter(sport) {
   selectedSport = sport;
-
-  // Update active state on buttons
   document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.classList.toggle('active', btn.textContent.trim().toUpperCase() === sport);
   });
-
-  // Re-render matchups for current date using new filter
   fetchMatchups(selectedDate);
+}
+
+function renderDateBar() {
+  const dateBar = document.getElementById('date-bar');
+  if (!dateBar) return;
+  
+  dateBar.innerHTML = '';
+  const today = new Date();
+
+  for (let i = -1; i <= 3; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    const dateStr = getLocalDateString(d);
+
+    let label = d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+    if (i === -1) label = 'Yesterday';
+    if (i === 0) label = 'Today';
+    if (i === 1) label = 'Tomorrow';
+
+    const btn = document.createElement('button');
+    btn.className = `date-btn ${dateStr === selectedDate ? 'active' : ''}`;
+    btn.textContent = label;
+    btn.onclick = () => {
+      selectedDate = dateStr;
+      renderDateBar();
+      fetchMatchups(selectedDate);
+    };
+    dateBar.appendChild(btn);
+  }
 }
 
 async function fetchMatchups(dateStr = selectedDate) {
@@ -248,14 +277,13 @@ async function fetchMatchups(dateStr = selectedDate) {
       return;
     }
 
-    // Client-side sport filter check
     const filteredMatchups = matchups.filter(m => {
       if (selectedSport === 'ALL') return true;
       return (m.sport || '').toUpperCase() === selectedSport;
     });
 
     if (filteredMatchups.length === 0) {
-      container.innerHTML = `<p style="text-align: center; color: #94a3b8;">No ${selectedSport === 'ALL' ? '' : selectedSport} matchups available for this date.</p>`;
+      container.innerHTML = `<p style="text-align: center; color: #94a3b8; padding: 2rem;">No ${selectedSport === 'ALL' ? '' : selectedSport} matchups available for this date.</p>`;
       return;
     }
 
@@ -300,143 +328,69 @@ async function fetchMatchups(dateStr = selectedDate) {
   }
 }
 
-    // Leaderboard Fetch
-    async function loadLeaderboard() {
-      try {
-        const response = await fetch('/api/leaderboard');
-        const leaderboard = await response.json();
-        const tbody = document.getElementById('leaderboard-body');
-        if (!tbody) return;
+async function loadLeaderboard() {
+  try {
+    const response = await fetch('/api/leaderboard');
+    const leaderboard = await response.json();
+    const tbody = document.getElementById('leaderboard-body');
+    if (!tbody) return;
 
-        tbody.innerHTML = '';
-        leaderboard.forEach((user, index) => {
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td><strong>#${index + 1}</strong></td>
-            <td>${user.username}</td>
-            <td><span class="badge win">🔥 ${user.current_streak}</span></td>
-            <td>🏆 ${user.longest_streak}</td>
-          `;
-          tbody.appendChild(row);
-        });
-      } catch (err) {
-        console.error('Failed to load leaderboard:', err);
-      }
-    }
-
-    // Pick History Fetch
-    async function fetchPickHistory() {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
-      try {
-        const response = await fetch('/api/users/picks', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
-        if (!response.ok) throw new Error('Failed to fetch history');
-        
-        const history = await response.json();
-        const listContainer = document.getElementById('history-list');
-        if (!listContainer) return;
-
-        listContainer.innerHTML = '';
-        history.forEach(item => {
-          const row = document.createElement('tr');
-          let statusBadge = '<span class="badge pending">⏳ Pending</span>';
-          if (item.status === 'Win') statusBadge = '<span class="badge win">✅ Win</span>';
-          else if (item.status === 'Loss') statusBadge = '<span class="badge loss">❌ Loss</span>';
-
-          row.innerHTML = `
-            <td>${item.sport}</td>
-            <td>${item.propText}</td>
-            <td><strong>${item.selectedOption}</strong></td>
-            <td>${statusBadge}</td>
-          `;
-          listContainer.appendChild(row);
-        });
-      } catch (err) {
-        console.error('Error rendering pick history:', err);
-      }
-    }
-
-    // Helper to format a Date object as YYYY-MM-DD using LOCAL time (not UTC)
-function getLocalDateString(dateObj = new Date()) {
-  const year = dateObj.getFullYear();
-  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-  const day = String(dateObj.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-// Initialize selectedDate with local day string
-let selectedDate = getLocalDateString();
-
-// Render dynamic day buttons (Today + next 4 days)
-function renderDateBar() {
-  const dateBar = document.getElementById('date-bar');
-  if (!dateBar) return;
-  
-  dateBar.innerHTML = '';
-  const today = new Date();
-
-  // Loop from -1 (Yesterday) up to +3 (3 days ahead)
-  for (let i = -1; i <= 3; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() + i);
-    
-    // Use local time formatting
-    const dateStr = getLocalDateString(d);
-
-    let label = d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
-    if (i === -1) label = 'Yesterday';
-    if (i === 0) label = 'Today';
-    if (i === 1) label = 'Tomorrow';
-
-    const btn = document.createElement('button');
-    btn.className = `date-btn ${dateStr === selectedDate ? 'active' : ''}`;
-    btn.textContent = label;
-    btn.onclick = () => {
-      selectedDate = dateStr;
-      renderDateBar();
-      fetchMatchups(selectedDate);
-    };
-    dateBar.appendChild(btn);
+    tbody.innerHTML = '';
+    leaderboard.forEach((user, index) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><strong>#${index + 1}</strong></td>
+        <td>${user.username}</td>
+        <td><span class="badge win">🔥 ${user.current_streak}</span></td>
+        <td>🏆 ${user.longest_streak}</td>
+      `;
+      tbody.appendChild(row);
+    });
+  } catch (err) {
+    console.error('Failed to load leaderboard:', err);
   }
 }
 
-async function makePick(matchupId, selectedOption) {
+async function fetchPickHistory() {
   const token = localStorage.getItem('token');
-  if (!token) {
-    alert('Please log in to make a pick.');
-    return;
-  }
+  if (!token) return;
 
   try {
-    const response = await fetch('/api/picks', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ matchup_id: matchupId, selected_option: selectedOption })
+    const response = await fetch('/api/users/picks', {
+      headers: { 'Authorization': `Bearer ${token}` }
     });
+    
+    if (!response.ok) throw new Error('Failed to fetch history');
+    
+    const history = await response.json();
+    const listContainer = document.getElementById('history-list');
+    if (!listContainer) return;
 
-    if (response.ok) {
-      // Re-fetch matchups to trigger the highlighted selected state
-      fetchMatchups(selectedDate); 
-    } else {
-      const err = await response.json();
-      alert(err.error || 'Failed to submit pick.');
-    }
+    listContainer.innerHTML = '';
+    history.forEach(item => {
+      const row = document.createElement('tr');
+      let statusBadge = '<span class="badge pending">🔒 Locked</span>';
+      if (item.status === 'WIN' || item.status === 'Win') statusBadge = '<span class="badge win">✅ Win</span>';
+      else if (item.status === 'LOSS' || item.status === 'Loss') statusBadge = '<span class="badge loss">❌ Loss</span>';
+
+      row.innerHTML = `
+        <td>${item.sport}</td>
+        <td>${item.propText || item.prop_text}</td>
+        <td><strong>${item.selectedOption || item.selected_option}</strong></td>
+        <td>${statusBadge}</td>
+      `;
+      listContainer.appendChild(row);
+    });
   } catch (err) {
-    console.error('Error making pick:', err);
+    console.error('Error rendering pick history:', err);
   }
 }
-    // Initial page load
-    document.addEventListener('DOMContentLoaded', () => {
-      renderDateBar();
-      fetchMatchups();
-    });
-  </script>
+
+document.addEventListener('DOMContentLoaded', () => {
+  checkAuthState();
+  renderDateBar();
+  fetchMatchups();
+});
+</script>
 </body>
 </html>
