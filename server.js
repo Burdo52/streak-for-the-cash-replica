@@ -113,7 +113,7 @@ app.get('/api/matchups', async (req, res) => {
     const targetDate = req.query.date || new Date().toLocaleDateString('sv-SE');
     let userId = null;
 
-    const authHeader = req.headers['authorization'];
+    const authHeader = req.headers['authorization'] || req.headers['Authorization'];
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1];
       if (token && token !== 'null' && token !== 'undefined' && process.env.JWT_SECRET) {

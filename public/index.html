@@ -295,8 +295,10 @@ async function fetchMatchups(dateStr = selectedDate) {
       const timeFormatted = startTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const sportClass = (m.sport || '').toLowerCase().trim();
 
-      const isOptionASelected = m.user_pick === m.option_a;
-      const isOptionBSelected = m.user_pick === m.option_b;
+      // Trim and lower-case comparison to prevent casing or spacing mismatches
+const userPickNorm = (m.user_pick || '').trim().toLowerCase();
+const isOptionASelected = userPickNorm && userPickNorm === (m.option_a || '').trim().toLowerCase();
+const isOptionBSelected = userPickNorm && userPickNorm === (m.option_b || '').trim().toLowerCase();
 
       const card = document.createElement('div');
       card.className = `matchup-card ${isLocked ? 'locked' : ''}`;
