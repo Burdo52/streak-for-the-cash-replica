@@ -119,16 +119,17 @@ app.get('/api/matchups', async (req, res) => {
       if (token && token !== 'null' && token !== 'undefined' && process.env.JWT_SECRET) {
         try {
           const decoded = jwt.verify(token, process.env.JWT_SECRET);
-          userId = decoded.user_id || decoded.id;
+          // Check userId, user_id, and id to cover all token signing formats
+          userId = decoded.userId || decoded.user_id || decoded.id || null;
         } catch (jwtErr) {
           console.warn('JWT verification skipped:', jwtErr.message);
         }
       }
     }
 
-    const queryUserId = userId ? userId : -1;
+    const queryUserId = userId !== null ? userId : -1;
 
-    // Use explicit timestamptz conversion for accurate Eastern local date filtering
+    // Use explicit timestamptz conversion and $1::integer casting
     const result = await db.query(`
       SELECT 
         m.matchup_id,
@@ -140,7 +141,9 @@ app.get('/api/matchups', async (req, res) => {
         m.status,
         up.selected_option AS user_pick
       FROM matchups m
-      LEFT JOIN user_picks up ON m.matchup_id = up.matchup_id AND up.user_id = $1
+      LEFT JOIN user_picks up 
+        ON m.matchup_id = up.matchup_id 
+       AND up.user_id = $1::integer
       WHERE DATE(m.start_time::timestamptz AT TIME ZONE 'America/New_York') = $2::date
       ORDER BY m.start_time ASC
     `, [queryUserId, targetDate]);
@@ -155,17 +158,16 @@ app.get('/api/matchups', async (req, res) => {
 app.post('/api/picks', authenticateToken, async (req, res) => {
   const matchupId = req.body.matchupId || req.body.matchup_id;
   const selectedOption = req.body.selectedOption || req.body.selected_option;
-  const userId = req.user.userId || req.user.user_id;
+  const userId = req.user.userId || req.user.user_id || req.user.id;
 
   if (!matchupId || !selectedOption) {
     return res.status(400).json({ error: 'Missing matchupId or selectedOption' });
   }
 
   try {
-    // Make sure 'const result =' is explicitly declared here
     const result = await db.query(`
       INSERT INTO user_picks (user_id, matchup_id, selected_option, status)
-      VALUES ($1, $2, $3, 'pending')
+      VALUES ($1, $2, $3, 'LOCKED')
       ON CONFLICT (user_id, matchup_id) 
       DO UPDATE SET 
         selected_option = EXCLUDED.selected_option,
@@ -173,7 +175,6 @@ app.post('/api/picks', authenticateToken, async (req, res) => {
       RETURNING *
     `, [userId, matchupId, selectedOption]);
 
-    // Now 'result' exists and can be safely accessed
     res.json({ success: true, pick: result.rows[0] });
   } catch (err) {
     console.error('ERROR IN /api/picks:', err);
