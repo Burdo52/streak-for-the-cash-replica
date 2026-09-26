@@ -347,9 +347,9 @@ cron.schedule('0 8 * * *', async () => {
 });
 
 // Run once when the server boots up in production
-if (process.env.NODE_ENV === 'production') {
-  fetchAndIngestMatchups(db);
-}
+//if (process.env.NODE_ENV === 'production') {
+//  fetchAndIngestMatchups(db);
+//}
 
 // Server Initialization
 app.listen(PORT, () => {
