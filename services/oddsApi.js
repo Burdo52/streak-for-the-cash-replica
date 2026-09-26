@@ -15,12 +15,12 @@ async function fetchAndIngestMatchups(db) {
     return;
   }
 
+
   console.log('🔄 Fetching Top 25 Rank Map from CFBD...');
   const rankMap = await getTop25RankMap();
   console.log(`📊 Loaded ${Object.keys(rankMap).length} ranked teams from CFBD:`, rankMap);
 
-  const sports = ['baseball_mlb', 'soccer_epl', 'americanfootball_nfl', 'americanfootball_ncaaf', 'basketball_nba',
-  'icehockey_nhl'];
+  const sports = ['baseball_mlb', 'soccer_epl', 'americanfootball_nfl', 'americanfootball_ncaaf'];
 
   for (const sportKey of sports) {
     try {
@@ -33,6 +33,10 @@ async function fetchAndIngestMatchups(db) {
           dateFormat: 'iso' 
         }
       });
+
+      const remaining = response.headers['x-requests-remaining'];
+      const used = response.headers['x-requests-used'];
+      console.log(`📊 [Odds API Quota] Used: ${used} | Remaining: ${remaining}`);
 
       const games = response.data;
       console.log(`📦 Received ${games.length} raw games for ${sportKey}`);
