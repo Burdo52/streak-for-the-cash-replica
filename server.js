@@ -327,11 +327,6 @@ cron.schedule('*/15 * * * *', async () => {
     }
 });
 
-cron.schedule('0 * * * *', () => {
-  console.log('Running automated Odds API sync...');
-  fetchAndIngestMatchups(db);
-});
-
 const { settleCompletedMatchups } = require('./services/settlementService');
 
 // Run settlement routine every 15 minutes
