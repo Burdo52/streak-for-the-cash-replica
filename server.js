@@ -257,7 +257,7 @@ app.get('/api/users/picks', authenticateToken, async (req, res) => {
     const history = result.rows.map(row => {
       let resultStatus = 'Pending';
       if (row.matchup_status === 'completed') {
-        resultStatus = row.selected_option === row.winning_option ? 'Win' : 'Loss';
+        resultStatus = row.matchup_status;
       }
 
       return {
