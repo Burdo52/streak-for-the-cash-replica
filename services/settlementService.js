@@ -18,6 +18,9 @@ async function settleCompletedMatchups(db) {
     const response = await fetch(
       `https://api.the-odds-api.com/v4/sports/baseball_mlb/scores/?apiKey=${ODDS_API_KEY}&daysFrom=1`
     );
+
+    console.log('📊 Requests Remaining:', response.headers.get('x-requests-remaining'));
+    console.log('📊 Requests Used:', response.headers.get('x-requests-used'));
     const scoresData = await response.json();
 
     // Guard Check: Ensure API returned a valid array before calling .find()
