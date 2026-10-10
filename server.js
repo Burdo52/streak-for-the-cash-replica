@@ -235,7 +235,8 @@ app.get('/api/leaderboard', async (req, res) => {
 
 // GET /api/users/picks - Fetch pick history for the logged-in user
 app.get('/api/users/picks', authenticateToken, async (req, res) => {
-  const userId = req.user.user_id;
+  // Support all token property formats to prevent undefined errors
+  const userId = req.user.userId || req.user.user_id || req.user.id;
 
   try {
     const result = await db.query(`
@@ -256,8 +257,8 @@ app.get('/api/users/picks', authenticateToken, async (req, res) => {
     // Format win/loss outcome for each pick
     const history = result.rows.map(row => {
       let resultStatus = 'Pending';
-      if (row.matchup_status === 'completed') {
-        resultStatus = row.matchup_status;
+      if (row.matchup_status === 'completed' || row.matchup_status === 'COMPLETED') {
+        resultStatus = row.selected_option === row.winning_option ? 'Win' : 'Loss';
       }
 
       return {
@@ -277,7 +278,6 @@ app.get('/api/users/picks', authenticateToken, async (req, res) => {
     res.status(500).json({ error: 'Failed to retrieve pick history.' });
   }
 });
-
 // POST /api/admin/ingest - Manual trigger for Odds API
 app.post('/api/admin/ingest', async (req, res) => {
   try {
