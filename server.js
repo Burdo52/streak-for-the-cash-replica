@@ -195,7 +195,25 @@ app.post('/api/picks', authenticateToken, async (req, res) => {
   }
 
   try {
-    // 1. Check if user already has an active/LOCKED pick on another game
+    // 0. Check if the matchup has already started or is locked
+    const matchupCheck = await db.query(
+      `SELECT start_time, status FROM matchups WHERE matchup_id = $1`,
+      [matchupId]
+    );
+
+    if (matchupCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Matchup not found.' });
+    }
+
+    const matchup = matchupCheck.rows[0];
+    const now = new Date();
+    const startTime = new Date(matchup.start_time);
+
+    if (now >= startTime || matchup.status !== 'scheduled') {
+      return res.status(400).json({ error: 'Cannot change pick: This matchup has already started or locked.' });
+    }
+
+    // 1. Check if user already has an active/LOCKED pick on a DIFFERENT game
     const activePickCheck = await db.query(
       `SELECT * FROM user_picks WHERE user_id = $1 AND status = 'LOCKED'`,
       [userId]
@@ -203,15 +221,15 @@ app.post('/api/picks', authenticateToken, async (req, res) => {
 
     if (activePickCheck.rows.length > 0) {
       const existing = activePickCheck.rows[0];
-      // If they are updating their pick on the *same* matchup, let it pass
+      // If the existing pick is for a DIFFERENT matchup, block it
       if (existing.matchup_id !== parseInt(matchupId)) {
         return res.status(400).json({ 
-          error: 'You already have an active pick locked in! You must wait for it to settle before making another.' 
+          error: 'You already have an active pick locked in on another matchup! You must wait for it to settle.' 
         });
       }
     }
 
-    // 2. Insert or update the pick normally
+    // 2. Insert or Update the pick (allows changing pick before start time)
     const result = await db.query(`
       INSERT INTO user_picks (user_id, matchup_id, selected_option, status)
       VALUES ($1, $2, $3, 'LOCKED')
