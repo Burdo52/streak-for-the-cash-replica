@@ -72,7 +72,15 @@ app.post('/api/auth/register', async (req, res) => {
     const user = result.rows[0];
     const token = jwt.sign({ userId: user.user_id, username: user.username }, JWT_SECRET, { expiresIn: '7d' });
     
-    res.json({ token, user: { id: user.user_id, username: user.username } });
+    // In /api/auth/login and /api/auth/register responses:
+res.json({ 
+  token, 
+  user: { 
+    id: user.user_id, 
+    username: user.username, 
+    current_streak: user.current_streak || 0 // <--- Include this
+  } 
+});
   } catch (err) {
     if (err.code === '23505') return res.status(400).json({ error: 'Username already exists' });
     res.status(500).json({ error: 'Registration failed: ' + err.message });
@@ -91,12 +99,34 @@ app.post('/api/auth/login', async (req, res) => {
     if (!validPassword) return res.status(400).json({ error: 'Invalid username or password' });
 
     const token = jwt.sign({ userId: user.user_id, username: user.username }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, user: { id: user.user_id, username: user.username } });
+    // In /api/auth/login and /api/auth/register responses:
+res.json({ 
+  token, 
+  user: { 
+    id: user.user_id, 
+    username: user.username, 
+    current_streak: user.current_streak || 0 // <--- Include this
+  } 
+});
   } catch (err) {
     res.status(500).json({ error: 'Login failed: ' + err.message });
   }
 });
 
+// GET /api/users/me - Get current user stats
+app.get('/api/users/me', authenticateToken, async (req, res) => {
+  const userId = req.user.userId || req.user.user_id || req.user.id;
+  try {
+    const result = await db.query(
+      `SELECT user_id, username, current_streak, longest_streak FROM users WHERE user_id = $1`,
+      [userId]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'User not found' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 // -------------------------------------------------------------
 // GAME LOGIC ENDPOINTS
 // -------------------------------------------------------------

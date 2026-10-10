@@ -13,10 +13,11 @@
   <h1>Streak for the Cash</h1>
   <div id="auth-nav">
     <button id="login-nav-btn" class="auth-btn" onclick="openAuthModal()">Login / Register</button>
-    <div id="user-info" style="display: none;">
-      <span id="username-display"></span>
-      <button class="auth-btn logout" onclick="logout()">Logout</button>
-    </div>
+    <div id="user-info" style="display: none; align-items: center; gap: 0.5rem;">
+  <span id="username-display"></span>
+  <span id="user-streak-badge" class="streak-badge neutral">--</span>
+  <button class="auth-btn logout" onclick="logout()">Logout</button>
+</div>
   </div>
 </header>
 
@@ -110,7 +111,7 @@ function getLocalDateString(dateObj = new Date()) {
   return `${year}-${month}-${day}`;
 }
 
-function checkAuthState() {
+async function checkAuthState() {
   const token = localStorage.getItem('token');
   const username = localStorage.getItem('username');
 
@@ -118,10 +119,47 @@ function checkAuthState() {
     document.getElementById('login-nav-btn').style.display = 'none';
     document.getElementById('user-info').style.display = 'flex';
     document.getElementById('username-display').textContent = `👤 ${username}`;
+    
+    // Fetch fresh user stats (including current streak) from backend
+    try {
+      const res = await fetch('/api/users/me', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const userData = await res.json();
+        renderStreakBadge(userData.current_streak);
+      }
+    } catch (err) {
+      console.error('Failed to fetch user streak info', err);
+    }
   } else {
     document.getElementById('login-nav-btn').style.display = 'block';
     document.getElementById('user-info').style.display = 'none';
   }
+}
+
+function renderStreakBadge(streakValue) {
+  const badge = document.getElementById('user-streak-badge');
+  if (!badge) return;
+
+  // Assuming positive numbers represent wins (W), negative numbers represent losses (L), or 0 is neutral.
+  // Adjust this logic if your DB stores losses separately or as negative values.
+  let label = '0';
+  let className = 'neutral';
+
+  if (streakValue > 0) {
+    label = `W${streakValue}`;
+    className = 'winning'; // Green
+  } else if (streakValue < 0) {
+    label = `L${Math.abs(streakValue)}`;
+    className = 'losing'; // Red
+  } else {
+    label = '0';
+    className = 'neutral';
+  }
+
+  badge.textContent = label;
+  badge.className = `streak-badge ${className}`;
 }
 
 function openAuthModal() {
