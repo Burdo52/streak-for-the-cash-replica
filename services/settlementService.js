@@ -21,6 +21,7 @@ async function settleCompletedMatchups(db) {
 
     console.log('📊 Requests Remaining:', response.headers.get('x-requests-remaining'));
     console.log('📊 Requests Used:', response.headers.get('x-requests-used'));
+    console.log('📊 Requests Last:', response.headers.get('x-requests-last'));
     const scoresData = await response.json();
 
     // Guard Check: Ensure API returned a valid array before calling .find()
