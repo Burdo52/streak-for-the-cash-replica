@@ -165,6 +165,23 @@ app.post('/api/picks', authenticateToken, async (req, res) => {
   }
 
   try {
+    // 1. Check if user already has an active/LOCKED pick on another game
+    const activePickCheck = await db.query(
+      `SELECT * FROM user_picks WHERE user_id = $1 AND status = 'LOCKED'`,
+      [userId]
+    );
+
+    if (activePickCheck.rows.length > 0) {
+      const existing = activePickCheck.rows[0];
+      // If they are updating their pick on the *same* matchup, let it pass
+      if (existing.matchup_id !== parseInt(matchupId)) {
+        return res.status(400).json({ 
+          error: 'You already have an active pick locked in! You must wait for it to settle before making another.' 
+        });
+      }
+    }
+
+    // 2. Insert or update the pick normally
     const result = await db.query(`
       INSERT INTO user_picks (user_id, matchup_id, selected_option, status)
       VALUES ($1, $2, $3, 'LOCKED')
