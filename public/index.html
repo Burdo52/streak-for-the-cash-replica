@@ -10,14 +10,16 @@
 
   <div class="app-container">
     <header class="app-header">
-  <h1>Streak for the Cash</h1>
+  <h1>
+    Streak for the Cash 
+    <span id="header-streak-badge" class="streak-badge neutral" style="display: none;">--</span>
+  </h1>
   <div id="auth-nav">
     <button id="login-nav-btn" class="auth-btn" onclick="openAuthModal()">Login / Register</button>
-    <div id="user-info" style="display: none; align-items: center; gap: 0.5rem;">
-  <span id="username-display"></span>
-  <span id="user-streak-badge" class="streak-badge neutral">--</span>
-  <button class="auth-btn logout" onclick="logout()">Logout</button>
-</div>
+    <div id="user-info" style="display: none;">
+      <span id="username-display"></span>
+      <button class="auth-btn logout" onclick="logout()">Logout</button>
+    </div>
   </div>
 </header>
 
@@ -127,32 +129,38 @@ async function checkAuthState() {
       });
       if (res.ok) {
         const userData = await res.json();
-        renderStreakBadge(userData.current_streak);
+        renderStreakBadge(userData.current_streak, true);
       }
     } catch (err) {
       console.error('Failed to fetch user streak info', err);
+      renderStreakBadge(0, true);
     }
   } else {
     document.getElementById('login-nav-btn').style.display = 'block';
     document.getElementById('user-info').style.display = 'none';
+    renderStreakBadge(0, false); // Hide streak badge when logged out
   }
 }
 
-function renderStreakBadge(streakValue) {
-  const badge = document.getElementById('user-streak-badge');
+function renderStreakBadge(streakValue, isLoggedIn) {
+  const badge = document.getElementById('header-streak-badge');
   if (!badge) return;
 
-  // Assuming positive numbers represent wins (W), negative numbers represent losses (L), or 0 is neutral.
-  // Adjust this logic if your DB stores losses separately or as negative values.
+  if (!isLoggedIn) {
+    badge.style.display = 'none';
+    return;
+  }
+
+  badge.style.display = 'inline-flex';
   let label = '0';
   let className = 'neutral';
 
   if (streakValue > 0) {
     label = `W${streakValue}`;
-    className = 'winning'; // Green
+    className = 'winning'; // Green styling
   } else if (streakValue < 0) {
     label = `L${Math.abs(streakValue)}`;
-    className = 'losing'; // Red
+    className = 'losing'; // Red styling
   } else {
     label = '0';
     className = 'neutral';
