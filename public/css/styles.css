@@ -113,25 +113,26 @@ body {
   border-color: var(--text-main);
 }
 
-/* Enhanced Matchup Cards with Better Contrast */
+/* Distinct Grey Matchup Cards */
 .matchup-card {
-  background-color: var(--bg-card);
-  border: 1px solid #cbd5e1; /* Stronger border contrast */
+  background-color: #eef2f6; /* Distinct cool grey background */
+  border: 1px solid #cbd5e1;
   border-radius: 12px;
   padding: 1.25rem;
   margin-bottom: 1.25rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04); /* Deeper shadow for lift */
-  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
 }
 
 .matchup-card:hover {
+  background-color: #e2e8f0; /* Richer grey on hover */
   border-color: #94a3b8;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
 }
 
 .matchup-card.locked {
   opacity: 0.75;
-  background-color: #f8fafc;
+  background-color: #e2e8f0;
 }
 
 .sport-badge {
