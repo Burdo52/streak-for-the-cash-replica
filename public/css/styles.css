@@ -113,42 +113,45 @@ body {
   border-color: var(--text-main);
 }
 
-/* Matchup Cards */
+/* Enhanced Matchup Cards with Better Contrast */
 .matchup-card {
   background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
+  border: 1px solid #cbd5e1; /* Stronger border contrast */
   border-radius: 12px;
   padding: 1.25rem;
-  margin-bottom: 1rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  transition: transform 0.2s;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04); /* Deeper shadow for lift */
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .matchup-card:hover {
   border-color: #94a3b8;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
 }
 
 .matchup-card.locked {
-  opacity: 0.7;
+  opacity: 0.75;
+  background-color: #f8fafc;
 }
 
 .sport-badge {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  background-color: rgba(37, 99, 235, 0.1);
-  color: #2563eb;
-  padding: 0.2rem 0.6rem;
+  background-color: #dbeafe; /* Slightly bolder badge background */
+  color: #1d4ed8;            /* Deeper blue text for readability */
+  padding: 0.25rem 0.65rem;
   border-radius: 6px;
   font-weight: 700;
 }
 
 .matchup-card h3 {
-  margin: 0.75rem 0 1rem 0;
-  font-size: 1.1rem;
-  color: var(--text-main);
+  margin: 0.85rem 0 1.15rem 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f172a; /* Deepest text tone for high contrast */
+  line-height: 1.4;
 }
-
 /* Options / Pick Buttons */
 .options {
   display: grid;
