@@ -471,30 +471,34 @@
 .streak-badge {
   display: inline-flex;
   align-items: center;
-  padding: 0.25rem 0.6rem;
+  justify-content: center;
+  padding: 0.35rem 0.8rem;
   border-radius: 9999px;
   font-weight: 700;
-  font-size: 0.85rem;
-  margin-left: 0.5rem;
+  font-size: 1.1rem; /* Increased size */
+  margin-left: 0.75rem;
+  vertical-align: middle;
+  letter-spacing: 0.5px;
 }
 
+/* Ensure these explicit color rules take precedence */
 .streak-badge.winning {
-  background-color: rgba(34, 197, 94, 0.15);
-  color: #22c55e;
-  border: 1px solid rgba(34, 197, 94, 0.3);
+  background-color: rgba(34, 197, 94, 0.2) !important;
+  color: #22c55e !important;
+  border: 1px solid rgba(34, 197, 94, 0.4) !important;
 }
 
 .streak-badge.losing {
-  background-color: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background-color: rgba(239, 68, 68, 0.2) !important;
+  color: #ef4444 !important;
+  border: 1px solid rgba(239, 68, 68, 0.4) !important;
 }
 
 .streak-badge.neutral {
-  background-color: rgba(148, 163, 184, 0.15);
+  background-color: rgba(148, 163, 184, 0.2);
   color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.4);
 }
-
   /* Mobile Media Queries */
   @media (max-width: 480px) {
     .app-header {
